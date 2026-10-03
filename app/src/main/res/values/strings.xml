@@ -48,4 +48,11 @@
     <string name="adjust_up">▲ %1$d</string>
     <string name="adjust_down">▼ %1$d</string>
     <string name="adjust_done">Done</string>
+
+    <!-- deleting a page -->
+    <string name="delete_page">Delete page</string>
+    <string name="delete_title">Delete page %1$d?</string>
+    <string name="delete_message">The page is taken out of the image. The pages around it are joined to each other.</string>
+    <string name="delete_confirm">Delete</string>
+    <string name="cancel">Cancel</string>
 </resources>

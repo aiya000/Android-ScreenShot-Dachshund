@@ -17,8 +17,8 @@ This app exists to keep that feature and to fix those problems, in the open.
 
 ## Status
 
-Work in progress. A capture can be taken, joined, shown, adjusted at each seam and saved. Dropping a
-whole page is not there yet.
+Work in progress, but the whole flow is there: a capture can be taken, joined, shown, adjusted at
+each seam, stripped of a page, and saved.
 
 ## How it works
 
@@ -28,7 +28,8 @@ whole page is not there yet.
 3. Tap Start. The service takes a screenshot, scrolls the app, takes another, and goes on until
    you tap Stop or the page scrolls no further
 4. The pages are joined into one tall image and shown. At every seam, Adjust lets you move where
-   the page above ends and where the page below starts, by dragging or in steps of ten rows
+   the page above ends and where the page below starts, by dragging or in steps of ten rows.
+   Delete page takes a page out, after asking, and joins its neighbours to each other
 5. Save writes the result as a PNG into `Pictures/ScreenShot-Dachshund/`
 
 The screenshots come from `AccessibilityService.takeScreenshot()`, so there is no screen-capture

@@ -10,6 +10,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -41,6 +44,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.aiya000.screenshotdachshund.R
 import io.github.aiya000.screenshotdachshund.join.CutModel
+import io.github.aiya000.screenshotdachshund.join.rejoinSeam
+import io.github.aiya000.screenshotdachshund.join.removeCut
 import io.github.aiya000.screenshotdachshund.storage.CaptureFiles
 import io.github.aiya000.screenshotdachshund.storage.SavedImages
 import kotlin.concurrent.thread
@@ -62,6 +67,8 @@ class EditActivity : ComponentActivity() {
             val model: CutModel,
             /** The seam being adjusted, or null. */
             val adjusting: Int?,
+            /** The cut whose page the user is being asked whether to delete, or null. */
+            val deleting: Int?,
             val savedAs: String?,
             val saving: Boolean,
         ) : State
@@ -90,6 +97,9 @@ class EditActivity : ComponentActivity() {
                     onAdjustDone = { update { it.copy(adjusting = null) } },
                     onMoveUpperEdge = { seam, rows -> update { it.copy(model = it.model.moveUpperEdge(seam, rows)) } },
                     onMoveLowerEdge = { seam, rows -> update { it.copy(model = it.model.moveLowerEdge(seam, rows)) } },
+                    onDelete = { cut -> update { it.copy(deleting = cut) } },
+                    onDeleteCancelled = { update { it.copy(deleting = null) } },
+                    onDeleteConfirmed = ::deleteConfirmed,
                 )
             }
         }
@@ -98,13 +108,30 @@ class EditActivity : ComponentActivity() {
             val result = runCatching { Joining.load(files) }
             runOnUiThread {
                 state = result.fold(
-                    onSuccess = { State.Ready(it, it.model, adjusting = null, savedAs = null, saving = false) },
+                    onSuccess = { State.Ready(it, it.model, adjusting = null, deleting = null, savedAs = null, saving = false) },
                     onFailure = {
                         Log.w(TAG, "load failed", it)
                         State.Failed(getString(R.string.join_failed))
                     },
                 )
             }
+        }
+    }
+
+    /**
+     * Drops the page the user confirmed. The two pages that become neighbours are joined
+     * afresh from their own overlap, since the cut between them was worked out against the
+     * page that is now gone.
+     */
+    private fun deleteConfirmed() {
+        update { ready ->
+            val index = ready.deleting ?: return@update ready
+            if (ready.model.cuts.size < 2) return@update ready.copy(deleting = null)
+            var model = ready.model.removeCut(index)
+            if (index in 1 until model.cuts.size) {
+                model = model.rejoinSeam(index - 1, ready.capture.pages, ready.capture.edges)
+            }
+            ready.copy(model = model, deleting = null)
         }
     }
 
@@ -143,6 +170,9 @@ class EditActivity : ComponentActivity() {
         onAdjustDone: () -> Unit,
         onMoveUpperEdge: (Int, Int) -> Unit,
         onMoveLowerEdge: (Int, Int) -> Unit,
+        onDelete: (Int) -> Unit,
+        onDeleteCancelled: () -> Unit,
+        onDeleteConfirmed: () -> Unit,
     ) {
         Scaffold(
             // testTagsAsResourceId: the device tests reach the buttons by these tags
@@ -187,7 +217,21 @@ class EditActivity : ComponentActivity() {
                     is State.Failed -> Text(state.message, modifier = Modifier.padding(24.dp))
 
                     is State.Ready -> {
-                        JoinedPreview(state.capture, state.model, onAdjust)
+                        JoinedPreview(
+                            capture = state.capture,
+                            model = state.model,
+                            onAdjust = onAdjust,
+                            onDelete = onDelete,
+                            canDelete = state.model.cuts.size > 1,
+                        )
+                        val deleting = state.deleting
+                        if (deleting != null) {
+                            DeletePageDialog(
+                                pageNumber = deleting + 1,
+                                onCancel = onDeleteCancelled,
+                                onConfirm = onDeleteConfirmed,
+                            )
+                        }
                         val seam = state.adjusting
                         if (seam != null) {
                             AdjustSeamDialog(
@@ -205,9 +249,18 @@ class EditActivity : ComponentActivity() {
         }
     }
 
-    /** The joined image, drawn from the page previews cut by cut, with an Adjust button at every seam. */
+    /**
+     * The joined image, drawn from the page previews cut by cut, with a Delete button on
+     * every page and an Adjust button at every seam.
+     */
     @Composable
-    private fun JoinedPreview(capture: LoadedCapture, model: CutModel, onAdjust: (Int) -> Unit) {
+    private fun JoinedPreview(
+        capture: LoadedCapture,
+        model: CutModel,
+        onAdjust: (Int) -> Unit,
+        onDelete: (Int) -> Unit,
+        canDelete: Boolean,
+    ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -217,23 +270,59 @@ class EditActivity : ComponentActivity() {
                 val preview = capture.previews[cut.pageIndex]
                 val top = cut.fromRow / capture.sample
                 val bottom = (cut.toRow / capture.sample).coerceAtMost(preview.height)
-                if (bottom > top) {
-                    Image(
-                        painter = BitmapPainter(
-                            preview.asImageBitmap(),
-                            srcOffset = IntOffset(0, top),
-                            srcSize = IntSize(preview.width, bottom - top),
-                        ),
-                        contentDescription = null,
-                        contentScale = ContentScale.FillWidth,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (bottom > top) {
+                        Image(
+                            painter = BitmapPainter(
+                                preview.asImageBitmap(),
+                                srcOffset = IntOffset(0, top),
+                                srcSize = IntSize(preview.width, bottom - top),
+                            ),
+                            contentDescription = null,
+                            contentScale = ContentScale.FillWidth,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    if (canDelete) {
+                        OutlinedButton(
+                            onClick = { onDelete(index) },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .testTag("delete-$index"),
+                        ) {
+                            Text(stringResource(R.string.delete_page))
+                        }
+                    }
                 }
                 if (index < model.seams) {
                     SeamBar(seam = index, onAdjust = onAdjust)
                 }
             }
         }
+    }
+
+    /** The question before a page goes: nothing happens until the user says yes. */
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun DeletePageDialog(pageNumber: Int, onCancel: () -> Unit, onConfirm: () -> Unit) {
+        AlertDialog(
+            onDismissRequest = onCancel,
+            // A dialog is a window of its own, so the device tests need this here too
+            modifier = Modifier.semantics { testTagsAsResourceId = true },
+            title = { Text(stringResource(R.string.delete_title, pageNumber)) },
+            text = { Text(stringResource(R.string.delete_message)) },
+            confirmButton = {
+                TextButton(onClick = onConfirm, modifier = Modifier.testTag("delete-confirm")) {
+                    Text(stringResource(R.string.delete_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onCancel, modifier = Modifier.testTag("delete-cancel")) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 
     companion object {

@@ -54,3 +54,44 @@ data class CutModel(
         require(seam in 0 until seams) { "seam $seam of $seams" }
     }
 }
+
+/**
+ * The model without cut [index]: the page is dropped from the joined image. A new first cut
+ * starts at the top of its page and a new last cut ends at the bottom of its page, since the
+ * bars they used to lose to a neighbour are now the edges of the whole image. Two cuts that
+ * become neighbours are left as they were; whether they overlap is for the caller to work
+ * out with the pages themselves.
+ */
+fun CutModel.removeCut(index: Int): CutModel {
+    require(cuts.size > 1) { "the last cut cannot be removed" }
+    require(index in cuts.indices) { "cut $index of ${cuts.size}" }
+    val remaining = cuts.toMutableList().also { it.removeAt(index) }
+    if (index == 0) {
+        remaining[0] = remaining[0].copy(fromRow = 0)
+    }
+    if (index == cuts.lastIndex) {
+        val last = remaining.last()
+        remaining[remaining.lastIndex] = last.copy(toRow = pageHeights[last.pageIndex])
+    }
+    return copy(cuts = remaining)
+}
+
+/** The model with the lower edge of seam [seam] put at [fromRow] of its page, kept inside the cut. */
+fun CutModel.withLowerEdge(seam: Int, fromRow: Int): CutModel {
+    val current = lowerEdge(seam)
+    return moveLowerEdge(seam, fromRow - current)
+}
+
+/**
+ * The model with seam [seam] joined afresh from the pages themselves: how far the page
+ * below moved from the page above decides where it starts, the way the first layout did.
+ * For two pages that became neighbours when the one between them was removed.
+ */
+fun CutModel.rejoinSeam(seam: Int, pages: List<io.github.aiya000.screenshotdachshund.image.PixelRows>, fixed: FixedEdge): CutModel {
+    val prev = pages[cuts[seam].pageIndex]
+    val next = pages[cuts[seam + 1].pageIndex]
+    val contentEnd = prev.height - fixed.bottom
+    val overlap = Joiner.findOverlap(prev, next, fixed)
+    val fromRow = if (overlap == null) fixed.top else maxOf(fixed.top, contentEnd - overlap)
+    return withLowerEdge(seam, fromRow)
+}
