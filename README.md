@@ -3,8 +3,17 @@
 An Android app that takes a scrolling (full-page) screenshot of apps that do not support one themselves,
 such as Firefox.
 
-It is meant as an open-source replacement for LongShot, which has not been maintained for a long time and
-sometimes stops responding without producing an image.
+## Purpose
+
+ScreenShot Dachshund is an open-source replacement for
+[LongShot](https://play.google.com/store/apps/details?id=com.leavjenn.longshot).
+
+Among the scrolling-screenshot apps, LongShot has one feature the others do not: it scrolls the app for
+you. A single tap captures a whole page, instead of the user scrolling and capturing by hand, page after
+page. But LongShot is no longer maintained, and it has a fatal bug: depending on the moment the stop
+button is tapped, the capture fails and nothing is saved.
+
+This app exists to keep that feature and to fix those problems, in the open.
 
 ## Status
 
