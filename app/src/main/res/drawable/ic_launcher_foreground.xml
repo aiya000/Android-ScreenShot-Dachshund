@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A tall phone screen, stretched like a dachshund, with a few text lines inside. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,22h20a4,4 0,0 1,4 4v56a4,4 0,0 1,-4 4h-20a4,4 0,0 1,-4 -4v-56a4,4 0,0 1,4 -4z" />
+    <path
+        android:fillColor="#3B2A1E"
+        android:pathData="M48,32h12v3h-12zM48,40h12v3h-12zM48,48h8v3h-8zM48,56h12v3h-12zM48,64h12v3h-12zM48,72h8v3h-8z" />
+</vector>
