@@ -23,7 +23,13 @@ detection, the overlap search, the PNG writer -- needs no device and lives in `a
 
 ```sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/10-capture-the-settings-and-save.sh
+ANDROID_SERIAL=emulator-5554 test-device/drive/20-adjust-a-seam.sh
 ```
+
+- `10`: a whole capture of the system settings, from the app's start button to a saved PNG that
+  is taller than the screen and shorter than the pages laid end to end
+- `20`: the same capture, then the first seam's upper edge moved down by fifty rows through the
+  Adjust dialog; the image saved afterwards has to be exactly fifty rows taller
 
 Each run keeps its screenshots, view-tree dumps and logs under `test-device/runs/<timestamp>/`,
 so a failure can be looked at afterwards. The `runs/` folder is not committed.
@@ -32,8 +38,10 @@ so a failure can be looked at afterwards. The `runs/` folder is not committed.
 
 - `lib.sh` installs the debug build and switches the service on through the secure settings,
   the way the user does in the accessibility settings, keeping whatever other services are on
-- things are tapped by the text they show (`ui.py` reads the uiautomator dump), never by
-  coordinates, so a layout change does not kill a script
+- things are tapped by the text they show or by their Compose test tag (`ui.py` reads the
+  uiautomator dump; the tags are exposed as resource ids), never by coordinates, so a layout
+  change does not kill a script. The one exception is the floating bar, which uiautomator must
+  not be used on (`lib.sh`, `overlay_frame`)
 - the service's floating bar is a window of its own; `wait_for_window` finds it through the
   window manager
 - what the service did is read from its log (`Dachshund` tag): how many pages, and why it

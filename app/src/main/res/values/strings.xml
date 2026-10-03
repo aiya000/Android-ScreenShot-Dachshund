@@ -39,4 +39,13 @@
     <string name="save_again">Save again</string>
     <string name="saved_to">Saved as %1$s</string>
     <string name="save_failed">The image could not be saved.</string>
+
+    <!-- adjusting a seam -->
+    <string name="adjust_seam">Adjust</string>
+    <string name="adjust_title">Seam %1$d</string>
+    <string name="adjust_upper_edge">Where the page above ends</string>
+    <string name="adjust_lower_edge">Where the page below starts</string>
+    <string name="adjust_up">▲ %1$d</string>
+    <string name="adjust_down">▼ %1$d</string>
+    <string name="adjust_done">Done</string>
 </resources>
