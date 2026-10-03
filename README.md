@@ -17,8 +17,8 @@ This app exists to keep that feature and to fix those problems, in the open.
 
 ## Status
 
-Work in progress. A capture can be taken, joined, shown and saved. Adjusting the cut between two
-pages and dropping a page are not there yet.
+Work in progress. A capture can be taken, joined, shown, adjusted at each seam and saved. Dropping a
+whole page is not there yet.
 
 ## How it works
 
@@ -27,8 +27,9 @@ pages and dropping a page are not there yet.
    app's own "Start a capture" button). A small bar floats over the app
 3. Tap Start. The service takes a screenshot, scrolls the app, takes another, and goes on until
    you tap Stop or the page scrolls no further
-4. The pages are joined into one tall image and shown; Save writes it as a PNG into
-   `Pictures/ScreenShot-Dachshund/`
+4. The pages are joined into one tall image and shown. At every seam, Adjust lets you move where
+   the page above ends and where the page below starts, by dragging or in steps of ten rows
+5. Save writes the result as a PNG into `Pictures/ScreenShot-Dachshund/`
 
 The screenshots come from `AccessibilityService.takeScreenshot()`, so there is no screen-capture
 consent dialog, and the scrolling from `dispatchGesture()` of the same service. The service reads
@@ -50,7 +51,7 @@ app/src/main/kotlin/io/github/aiya000/screenshotdachshund/
 ├── join/                    -- fixed edges, overlap search, the joined image
 ├── service/                 -- the accessibility service, its floating bar, the tile
 ├── storage/                 -- the capture's files, and saving to the shared pictures
-└── ui/                      -- the edit screen, the joining, the tile's invisible activity
+└── ui/                      -- the edit screen, the seam adjuster, the joining, the tile's invisible activity
 ```
 
 ## Testing

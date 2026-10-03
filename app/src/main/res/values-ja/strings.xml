@@ -29,4 +29,10 @@
     <string name="save_again">もう一度保存</string>
     <string name="saved_to">%1$s として保存しました</string>
     <string name="save_failed">画像を保存できませんでした。</string>
+
+    <string name="adjust_seam">調整</string>
+    <string name="adjust_title">継ぎ目 %1$d</string>
+    <string name="adjust_upper_edge">上のページの終わり</string>
+    <string name="adjust_lower_edge">下のページの始まり</string>
+    <string name="adjust_done">完了</string>
 </resources>

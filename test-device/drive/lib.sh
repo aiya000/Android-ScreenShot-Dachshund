@@ -263,3 +263,153 @@ png_size() {
     "${ADB[@]}" exec-out "dd if='$1' bs=24 count=1 2>/dev/null" |
         python3 -c 'import struct,sys; d=sys.stdin.buffer.read(); print(*struct.unpack(">II", d[16:24]))'
 }
+
+# Presses whatever carries this resource id; Compose test tags are exposed as resource ids
+ui_tap_id() {
+    local id="$1" name="${2:-tap}"
+    local dump point
+    dump="$(ui_dump "$name")"
+    if ! point="$(python3 "$DRIVE_DIR/ui.py" "$dump" --resource-id "$id")"; then
+        fail "nothing on screen has the id '$id' (view tree in $dump)"
+        return 1
+    fi
+    sleep 2
+
+    # shellcheck disable=SC2086
+    "${ADB[@]}" shell input tap $point
+}
+
+ui_wait_id() {
+    local id="$1" seconds="${2:-60}" name="${3:-wait}"
+    local waited=0 dump
+    while [ "$waited" -lt "$seconds" ]; do
+        dump="$(ui_dump "$name")"
+        if python3 "$DRIVE_DIR/ui.py" "$dump" --resource-id "$id" > /dev/null; then
+            return 0
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+    return 1
+}
+
+# The files saved so far, newest first
+saved_files() {
+    "${ADB[@]}" shell ls -t /sdcard/Pictures/ScreenShot-Dachshund 2>/dev/null | tr -d '\r' || true
+}
+
+# Presses Save on the edit screen and waits for a new file; prints its name
+save_and_name() {
+    local before after latest
+    before="$(saved_files | wc -l)"
+    ui_tap_id "save" "${1:-save}"
+    local waited=0
+    while [ "$waited" -lt 60 ]; do
+        after="$(saved_files | wc -l)"
+        if [ "$after" -gt "$before" ]; then
+            saved_files | head -n 1
+            return 0
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+    return 1
+}
+
+swipes_done() {
+    local log
+    log="$(app_log)"
+    rg -c 'swipe done' <<< "$log" || echo 0
+}
+
+# A whole capture of the system settings, from the app's own start button to the edit screen.
+# Leaves the number of pages in CAPTURED_PAGES. Each step reports through pass/fail
+capture_the_settings() {
+    local prefix="${1:-cap}"
+
+    step "open the app and start a capture from its button"
+    logcat_reset
+    "${ADB[@]}" shell am start -W -n "$PACKAGE/io.github.aiya000.screenshotdachshund.MainActivity" > /dev/null
+    sleep 2
+    screenshot "$prefix-home"
+    if ui_wait_text "Start a capture" 10 "$prefix-home"; then
+        pass "the home screen is up"
+    else
+        fail "the home screen did not come up"
+    fi
+    ui_tap_text "Start a capture" "$prefix-start"
+    sleep 1
+
+    step "the app stepped aside and the floating bar is on screen"
+    if wait_for_bar 10; then
+        pass "the floating bar is a window of its own"
+    else
+        fail "no floating bar window"
+    fi
+
+    step "bring up something long to scroll: the system settings"
+    # stopped first, so that the list opens at its top rather than wherever the last run left it
+    "${ADB[@]}" shell am force-stop com.android.settings
+    "${ADB[@]}" shell am start -W -a android.settings.SETTINGS > /dev/null
+    sleep 3
+    screenshot "$prefix-settings-with-bar"
+
+    step "tap Start on the bar"
+    tap_bar start
+    sleep 7
+    screenshot "$prefix-capturing"
+
+    step "tap Stop on the bar, after a few pages"
+    # A tap while the service is dispatching its swipe goes to the app underneath together with
+    # the swipe, and opens whatever row is under the bar. So the stop is pressed right after the
+    # service says a swipe is done, inside the pause before the next screenshot, and pressed
+    # again if it was not heard -- unless the page ran out first, which a short list may well do
+    local attempt tick seen
+    for attempt in 1 2 3 4 5 6; do
+        if log_matches 'stop requested|finished:'; then
+            break
+        fi
+        seen="$(swipes_done)"
+        for tick in $(seq 1 40); do
+            if [ "$(swipes_done)" -gt "$seen" ]; then
+                break
+            fi
+            sleep 0.2
+        done
+        if overlay_frame > /dev/null; then
+            tap_bar stop
+        fi
+        sleep 0.5
+    done
+
+    step "the capture ends and the edit screen opens"
+    if wait_for_log 'finished: (Stopped|EndOfContent), [0-9]+ pages' 60 "$prefix-finish"; then
+        pass "the service finished the capture"
+    else
+        fail "the service never finished"
+    fi
+    CAPTURED_PAGES="$(app_log | rg -o 'finished: \w+, ([0-9]+) pages' -r '$1' | tail -n 1)"
+    note "pages: ${CAPTURED_PAGES:-?}"
+    if ui_wait_id "save" 60 "$prefix-edit"; then
+        pass "the edit screen shows its Save button"
+    else
+        fail "no edit screen with a Save button"
+    fi
+    screenshot "$prefix-edit"
+}
+
+# Drags the screen up until something with this id is in view, a screenful at a time
+ui_scroll_to_id() {
+    local id="$1" name="${2:-scroll}"
+    local attempt dump
+    for attempt in 1 2 3 4 5 6 7 8; do
+        dump="$(ui_dump "$name-$attempt")"
+        if python3 "$DRIVE_DIR/ui.py" "$dump" --resource-id "$id" > /dev/null; then
+            return 0
+        fi
+        "${ADB[@]}" shell input swipe 540 1700 540 700 400
+        sleep 1
+    done
+    fail "nothing with the id '$id' came into view after scrolling"
+    return 1
+}
