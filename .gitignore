@@ -10,3 +10,6 @@ captures/
 .cxx/
 *.apk
 *.aab
+
+# device-test runs: screenshots, dumps and logs of each run
+test-device/runs/

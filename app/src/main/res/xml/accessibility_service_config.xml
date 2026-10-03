@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    No canRetrieveWindowContent: the service never asks what is on screen. It wants three
+    abilities it cannot get any other way: taking a screenshot, performing the swipe,
+    and hearing that the swipe scrolled something, and nothing more.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeViewScrolled"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:canPerformGestures="true"
+    android:canRetrieveWindowContent="false"
+    android:canTakeScreenshot="true"
+    android:description="@string/service_description"
+    android:notificationTimeout="50"
+    android:summary="@string/service_summary" />

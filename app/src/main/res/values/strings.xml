@@ -1,4 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ScreenShot Dachshund</string>
+
+    <!-- the accessibility service, as the system settings show it -->
+    <string name="service_label">ScreenShot Dachshund</string>
+    <string name="service_summary">Takes scrolling screenshots</string>
+    <string name="service_description">Takes a screenshot, scrolls the app on screen, takes another, and joins them into one tall image. The service reads nothing from the screen: it only takes screenshots, scrolls, and listens for scroll events while a capture runs.</string>
+
+    <!-- the quick-settings tile -->
+    <string name="tile_label">Scrolling screenshot</string>
+
+    <!-- the home screen -->
+    <string name="home_intro">Takes a scrolling screenshot of the app on screen, for apps that have no such screenshot of their own.</string>
+    <string name="service_status_on">The accessibility service is on.</string>
+    <string name="service_status_off">The accessibility service is off. Switch it on in the accessibility settings first.</string>
+    <string name="open_accessibility_settings">Open accessibility settings</string>
+    <string name="start_capture">Start a capture</string>
+    <string name="home_tile_hint">Tip: add the \"Scrolling screenshot\" tile to the quick settings to start a capture from any app.</string>
+    <string name="service_not_enabled">The accessibility service is not on.</string>
+
+    <!-- the floating bar -->
+    <string name="overlay_start">Start</string>
+    <string name="overlay_dismiss">✕</string>
+    <string name="overlay_stop">Stop</string>
+    <string name="overlay_stopping">Stopping…</string>
+
+    <!-- the capture -->
+    <string name="capture_failed">The screenshot failed.</string>
+    <string name="capture_nothing">Nothing was captured.</string>
+
+    <!-- the edit screen -->
+    <string name="edit_title">Capture</string>
+    <string name="joining">Joining the pages…</string>
+    <string name="join_failed">The pages could not be joined.</string>
+    <string name="joined_image">The joined screenshot</string>
+    <string name="save">Save</string>
+    <string name="saving">Saving…</string>
+    <string name="save_again">Save again</string>
+    <string name="saved_to">Saved as %1$s</string>
+    <string name="save_failed">The image could not be saved.</string>
 </resources>
