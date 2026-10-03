@@ -24,12 +24,15 @@ detection, the overlap search, the PNG writer -- needs no device and lives in `a
 ```sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/10-capture-the-settings-and-save.sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/20-adjust-a-seam.sh
+ANDROID_SERIAL=emulator-5554 test-device/drive/30-delete-a-page.sh
 ```
 
 - `10`: a whole capture of the system settings, from the app's start button to a saved PNG that
   is taller than the screen and shorter than the pages laid end to end
 - `20`: the same capture, then the first seam's upper edge moved down by fifty rows through the
   Adjust dialog; the image saved afterwards has to be exactly fifty rows taller
+- `30`: the same capture, then the first page's Delete: Cancel leaves the saved height as it was,
+  Delete makes the next save shorter
 
 Each run keeps its screenshots, view-tree dumps and logs under `test-device/runs/<timestamp>/`,
 so a failure can be looked at afterwards. The `runs/` folder is not committed.

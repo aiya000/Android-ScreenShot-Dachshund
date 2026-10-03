@@ -35,4 +35,10 @@
     <string name="adjust_upper_edge">上のページの終わり</string>
     <string name="adjust_lower_edge">下のページの始まり</string>
     <string name="adjust_done">完了</string>
+
+    <string name="delete_page">ページを削除</string>
+    <string name="delete_title">ページ %1$d を削除しますか？</string>
+    <string name="delete_message">このページを画像から取り除きます。前後のページは互いにつながれます。</string>
+    <string name="delete_confirm">削除</string>
+    <string name="cancel">キャンセル</string>
 </resources>

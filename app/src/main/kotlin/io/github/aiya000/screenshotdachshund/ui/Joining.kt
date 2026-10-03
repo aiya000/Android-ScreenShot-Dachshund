@@ -16,6 +16,8 @@ import java.io.File
 class LoadedCapture(
     val pages: List<StoredPage>,
     val model: CutModel,
+    /** The bars at the top and bottom of every page, as the layout saw them. */
+    val edges: FixedEdge,
     /** Each page scaled down by [sample], in capture order. */
     val previews: List<Bitmap>,
     val sample: Int,
@@ -31,7 +33,8 @@ object Joining {
 
         // The status bar and the navigation bar are never content, whatever their pixels do
         val bars = files.readInsets()?.let { (top, bottom) -> FixedEdge(top, bottom) } ?: FixedEdge(0, 0)
-        val cuts = Joiner.layout(pages, FixedEdges.detect(pages, atLeast = bars))
+        val edges = FixedEdges.detect(pages, atLeast = bars)
+        val cuts = Joiner.layout(pages, edges)
         val model = CutModel(cuts, pages.map { it.height })
 
         var sample = 1
@@ -43,7 +46,7 @@ object Joining {
             }
             BitmapFactory.decodeFile(page.file.path, options) ?: error("cannot decode ${page.file.name}")
         }
-        return LoadedCapture(pages, model, previews, sample)
+        return LoadedCapture(pages, model, edges, previews, sample)
     }
 
     /** Writes the joined image of [pages] under [cuts] to disk, one row at a time, and returns it. */
