@@ -19,7 +19,10 @@ android {
 
     defaultConfig {
         applicationId = "io.github.aiya000.screenshotdachshund"
-        minSdk = 26
+        // AccessibilityService.takeScreenshot() and its canTakeScreenshot attribute are
+        // API 30. The capture is built on it (no MediaProjection consent dialog, no
+        // VirtualDisplay), so 30 is the floor rather than something to work around.
+        minSdk = 30
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
@@ -75,7 +78,17 @@ android {
         compose = true
     }
 
+    testOptions {
+        unitTests {
+            // The JVM tests run against the android.jar stubs, whose methods throw unless
+            // this is set. The logic under test is plain Kotlin and never needs a real
+            // Context; anything that does belongs on a device, not in this source set.
+            isReturnDefaultValues = true
+        }
+    }
+
     sourceSets["main"].java.srcDirs("src/main/kotlin")
+    sourceSets["test"].java.srcDirs("src/test/kotlin")
 }
 
 dependencies {
@@ -88,4 +101,6 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-core")
+
+    testImplementation("junit:junit:4.13.2")
 }

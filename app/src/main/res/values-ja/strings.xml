@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_summary">スクロールスクリーンショットを撮ります</string>
+    <string name="service_description">スクリーンショットを撮り、画面のアプリをスクロールし、また撮り、それらを1枚の縦長の画像につなぎます。このサービスは画面の内容を読み取りません。撮影中にスクリーンショットの取得、スクロール、スクロールイベントの監視だけを行います。</string>
+
+    <string name="tile_label">スクロールスクショ</string>
+
+    <string name="home_intro">スクロールスクリーンショットに対応していないアプリでも、画面のアプリを縦長に撮影します。</string>
+    <string name="service_status_on">ユーザー補助サービスはオンです。</string>
+    <string name="service_status_off">ユーザー補助サービスがオフです。先にユーザー補助の設定でオンにしてください。</string>
+    <string name="open_accessibility_settings">ユーザー補助の設定を開く</string>
+    <string name="start_capture">撮影を始める</string>
+    <string name="home_tile_hint">ヒント: クイック設定に「スクロールスクショ」タイルを追加すると、どのアプリからでも撮影を始められます。</string>
+    <string name="service_not_enabled">ユーザー補助サービスがオフです。</string>
+
+    <string name="overlay_start">撮影開始</string>
+    <string name="overlay_stop">停止</string>
+    <string name="overlay_stopping">停止中…</string>
+
+    <string name="capture_failed">スクリーンショットに失敗しました。</string>
+    <string name="capture_nothing">何も撮影されませんでした。</string>
+
+    <string name="edit_title">撮影結果</string>
+    <string name="joining">ページをつないでいます…</string>
+    <string name="join_failed">ページをつなげませんでした。</string>
+    <string name="joined_image">つないだスクリーンショット</string>
+    <string name="save">保存</string>
+    <string name="saving">保存中…</string>
+    <string name="save_again">もう一度保存</string>
+    <string name="saved_to">%1$s として保存しました</string>
+    <string name="save_failed">画像を保存できませんでした。</string>
+</resources>

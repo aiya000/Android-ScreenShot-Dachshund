@@ -17,19 +17,47 @@ This app exists to keep that feature and to fix those problems, in the open.
 
 ## Status
 
-Work in progress. Nothing is captured yet.
+Work in progress. A capture can be taken, joined, shown and saved. Adjusting the cut between two
+pages and dropping a page are not there yet.
+
+## How it works
+
+1. Switch the app's accessibility service on, once, in the system's accessibility settings
+2. Open the app to capture, then tap the "Scrolling screenshot" quick-settings tile (or the
+   app's own "Start a capture" button). A small bar floats over the app
+3. Tap Start. The service takes a screenshot, scrolls the app, takes another, and goes on until
+   you tap Stop or the page scrolls no further
+4. The pages are joined into one tall image and shown; Save writes it as a PNG into
+   `Pictures/ScreenShot-Dachshund/`
+
+The screenshots come from `AccessibilityService.takeScreenshot()`, so there is no screen-capture
+consent dialog, and the scrolling from `dispatchGesture()` of the same service. The service reads
+nothing from the screen: it only takes screenshots, scrolls, and listens for scroll events while a
+capture runs.
 
 ## Layout
 
 - Language: Kotlin
-- UI: Jetpack Compose
+- UI: Jetpack Compose (the floating bar is plain views, since it lives in a service window)
 - applicationId: `io.github.aiya000.screenshotdachshund` (`.debug` is appended to the debug build)
-- minSdk 26 / targetSdk 35 / compileSdk 35
+- minSdk 30 / targetSdk 35 / compileSdk 35
 
 ```
 app/src/main/kotlin/io/github/aiya000/screenshotdachshund/
-└── MainActivity.kt     -- the entry point
+├── MainActivity.kt          -- the front door: service status, settings, a start button
+├── capture/CaptureSession   -- the capture as a state machine, with no Android in it
+├── image/                   -- rows of pixels: hashes, stored pages, a streaming PNG writer
+├── join/                    -- fixed edges, overlap search, the joined image
+├── service/                 -- the accessibility service, its floating bar, the tile
+├── storage/                 -- the capture's files, and saving to the shared pictures
+└── ui/                      -- the edit screen, the joining, the tile's invisible activity
 ```
+
+## Testing
+
+- The logic that needs no device lives in `app/src/test/` and runs on the JVM:
+  `./gradlew :app:testDebugUnitTest`
+- A capture driven end to end on an emulator lives in `test-device/` (see its README)
 
 ## Building
 
