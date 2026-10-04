@@ -244,10 +244,14 @@ class DachshundService : AccessibilityService() {
             gesture,
             object : GestureResultCallback() {
                 override fun onCompleted(gestureDescription: GestureDescription?) = afterSwipe()
-                override fun onCancelled(gestureDescription: GestureDescription?) = afterSwipe()
+                override fun onCancelled(gestureDescription: GestureDescription?) {
+                    Log.d(TAG, "swipe cancelled")
+                    afterSwipe()
+                }
             },
             mainHandler,
         )
+        Log.d(TAG, "swipe dispatched=$dispatched")
         if (!dispatched) afterSwipe()
     }
 
