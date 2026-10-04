@@ -36,6 +36,26 @@ data class CutModel(
         return cuts[seam + 1].fromRow
     }
 
+    /** The first row of the image: where the first page starts being shown, as a row of that page. */
+    val start: Int get() = cuts.first().fromRow
+
+    /** One past the last row of the image: where the last page stops being shown, as a row of that page. */
+    val end: Int get() = cuts.last().toRow
+
+    /** The image starting [rows] further down the first page (further up for a negative number); the first cut keeps at least one row. */
+    fun moveStart(rows: Int): CutModel {
+        val cut = cuts.first()
+        val fromRow = (cut.fromRow + rows).coerceIn(0, cut.toRow - 1)
+        return copy(cuts = cuts.toMutableList().also { it[0] = cut.copy(fromRow = fromRow) })
+    }
+
+    /** The image ending [rows] further down the last page (further up for a negative number); the last cut keeps at least one row. */
+    fun moveEnd(rows: Int): CutModel {
+        val cut = cuts.last()
+        val toRow = (cut.toRow + rows).coerceIn(cut.fromRow + 1, pageHeights[cut.pageIndex])
+        return copy(cuts = cuts.toMutableList().also { it[cuts.lastIndex] = cut.copy(toRow = toRow) })
+    }
+
     fun moveUpperEdge(seam: Int, rows: Int): CutModel {
         requireSeam(seam)
         val cut = cuts[seam]
@@ -53,6 +73,31 @@ data class CutModel(
     private fun requireSeam(seam: Int) {
         require(seam in 0 until seams) { "seam $seam of $seams" }
     }
+}
+
+/**
+ * What the adjust screen is moving: the two edges of one seam, or one end of the whole
+ * image. The start of the image is a lower edge with nothing above it, and the end an
+ * upper edge with nothing below it, so the same screen serves all three.
+ */
+sealed interface Adjusting {
+    data class Seam(val seam: Int) : Adjusting
+    data object Start : Adjusting
+    data object End : Adjusting
+}
+
+/** The upper edge of [adjusting] moved by [rows]: a seam's upper edge, or the end of the image. The start has no upper edge. */
+fun CutModel.moveUpperEdge(adjusting: Adjusting, rows: Int): CutModel = when (adjusting) {
+    is Adjusting.Seam -> moveUpperEdge(adjusting.seam, rows)
+    Adjusting.End -> moveEnd(rows)
+    Adjusting.Start -> this
+}
+
+/** The lower edge of [adjusting] moved by [rows]: a seam's lower edge, or the start of the image. The end has no lower edge. */
+fun CutModel.moveLowerEdge(adjusting: Adjusting, rows: Int): CutModel = when (adjusting) {
+    is Adjusting.Seam -> moveLowerEdge(adjusting.seam, rows)
+    Adjusting.Start -> moveStart(rows)
+    Adjusting.End -> this
 }
 
 /**

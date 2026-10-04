@@ -56,6 +56,14 @@
     <string name="adjust_down">▼ %1$d</string>
     <string name="adjust_done">Done</string>
 
+    <!-- trimming the start and the end of the image -->
+    <string name="trim_start">Start here</string>
+    <string name="trim_end">End here</string>
+    <string name="trim_start_title">Start of the image</string>
+    <string name="trim_end_title">End of the image</string>
+    <string name="trim_start_edge">Where the image starts</string>
+    <string name="trim_end_edge">Where the image ends</string>
+
     <!-- deleting a page -->
     <string name="delete_page">Delete</string>
     <string name="delete_title">Delete page %1$d?</string>
