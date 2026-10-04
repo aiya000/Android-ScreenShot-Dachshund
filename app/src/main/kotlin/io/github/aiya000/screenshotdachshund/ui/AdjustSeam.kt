@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
@@ -144,14 +143,19 @@ private fun SeamPicture(
         modifier = modifier
             .testTag("seam-picture")
             .pointerInput(seam) {
-                detectVerticalDragGestures { change, dragAmount ->
+                // Which edge a drag moves is decided where the finger lands, and kept for the
+                // whole drag: a finger that crosses the middle line goes on moving the same edge
+                var upperHalf = true
+                detectVerticalDragGestures(
+                    onDragStart = { start -> upperHalf = start.y < size.height / 2f },
+                ) { change, dragAmount ->
                     change.consume()
                     // The picture is drawn at this many page rows per pixel on screen
                     val rowsPerPixel = upper.width.toFloat() * capture.sample / size.width
                     // The content follows the finger, as a scroll does: dragging up slides the
                     // page up, which shows rows further down it, so the edge moves down the page
                     val rows = (-dragAmount * rowsPerPixel).roundToInt()
-                    if (change.position.y < size.height / 2f) onMoveUpperEdge(rows) else onMoveLowerEdge(rows)
+                    if (upperHalf) onMoveUpperEdge(rows) else onMoveLowerEdge(rows)
                 }
             },
     ) {
@@ -187,18 +191,22 @@ private fun SeamPicture(
             )
         }
 
+        // A hairline, so that a seam can be judged to the row; the short bars at the ends
+        // make it easy to spot without covering anything in the middle
         drawLine(
             color = seamColor,
             start = Offset(0f, seamY),
             end = Offset(size.width, seamY),
-            strokeWidth = 2.dp.toPx(),
+            strokeWidth = 1f,
         )
-        // a faint hint on the line's ends, so it reads as the seam even over a dark page
-        drawLine(
-            color = Color.White.copy(alpha = 0.6f),
-            start = Offset(0f, seamY + 2.dp.toPx()),
-            end = Offset(size.width, seamY + 2.dp.toPx()),
-            strokeWidth = 1.dp.toPx(),
-        )
+        val bar = 10.dp.toPx()
+        for (x in listOf(0f, size.width - bar)) {
+            drawLine(
+                color = seamColor,
+                start = Offset(x, seamY),
+                end = Offset(x + bar, seamY),
+                strokeWidth = 3.dp.toPx(),
+            )
+        }
     }
 }
