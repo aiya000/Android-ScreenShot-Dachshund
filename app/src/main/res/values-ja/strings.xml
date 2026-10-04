@@ -49,6 +49,10 @@
     <string name="trim_start_edge">画像の始まり</string>
     <string name="trim_end_edge">画像の終わり</string>
 
+    <string name="leave_title">保存せずに閉じますか？</string>
+    <string name="leave_message">いまの内容はまだ保存されていません。閉じると失われます。</string>
+    <string name="leave_confirm">閉じる</string>
+
     <string name="delete_page">削除</string>
     <string name="delete_title">ページ %1$d を削除しますか？</string>
     <string name="delete_message">このページを画像から取り除きます。前後のページは互いにつながれます。</string>

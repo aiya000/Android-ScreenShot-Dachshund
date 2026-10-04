@@ -64,6 +64,11 @@
     <string name="trim_start_edge">Where the image starts</string>
     <string name="trim_end_edge">Where the image ends</string>
 
+    <!-- leaving the edit screen -->
+    <string name="leave_title">Leave without saving?</string>
+    <string name="leave_message">What is on screen has not been saved. If you leave now, it is gone.</string>
+    <string name="leave_confirm">Leave</string>
+
     <!-- deleting a page -->
     <string name="delete_page">Delete</string>
     <string name="delete_title">Delete page %1$d?</string>

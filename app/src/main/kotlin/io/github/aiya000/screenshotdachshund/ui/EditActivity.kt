@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -59,6 +60,7 @@ import io.github.aiya000.screenshotdachshund.join.moveLowerEdge
 import io.github.aiya000.screenshotdachshund.join.moveUpperEdge
 import io.github.aiya000.screenshotdachshund.join.rejoinSeam
 import io.github.aiya000.screenshotdachshund.join.removeCut
+import io.github.aiya000.screenshotdachshund.join.unsavedWork
 import io.github.aiya000.screenshotdachshund.storage.CaptureFiles
 import io.github.aiya000.screenshotdachshund.storage.SavedImages
 import kotlin.concurrent.thread
@@ -84,6 +86,10 @@ class EditActivity : ComponentActivity() {
             val deleting: Int?,
             val savedAs: String?,
             val saving: Boolean,
+            /** The cuts as they were at the last save, or null before any; what "unsaved" is measured against. */
+            val savedModel: CutModel?,
+            /** Whether the user is being asked whether to leave with unsaved work. */
+            val leaving: Boolean,
         ) : State
 
         data class Failed(val message: String) : State
@@ -112,6 +118,9 @@ class EditActivity : ComponentActivity() {
                     onDelete = { cut -> update { it.copy(deleting = cut) } },
                     onDeleteCancelled = { update { it.copy(deleting = null) } },
                     onDeleteConfirmed = ::deleteConfirmed,
+                    onLeave = { update { it.copy(leaving = true) } },
+                    onLeaveCancelled = { update { it.copy(leaving = false) } },
+                    onLeaveConfirmed = { finish() },
                 )
             }
         }
@@ -143,7 +152,13 @@ class EditActivity : ComponentActivity() {
                 // Another capture may have taken over while this one was being joined
                 if (files !== loading) return@runOnUiThread
                 state = result.fold(
-                    onSuccess = { State.Ready(it, it.model, adjusting = null, deleting = null, savedAs = null, saving = false) },
+                    onSuccess = {
+                        State.Ready(
+                            it, it.model,
+                            adjusting = null, deleting = null, savedAs = null, saving = false,
+                            savedModel = null, leaving = false,
+                        )
+                    },
                     onFailure = {
                         Log.w(TAG, "load failed", it)
                         State.Failed(getString(R.string.join_failed))
@@ -186,7 +201,13 @@ class EditActivity : ComponentActivity() {
                 .getOrNull()
                 ?.let { SavedImages.save(this, it) }
             runOnUiThread {
-                update { it.copy(saving = false, savedAs = name ?: it.savedAs) }
+                update {
+                    it.copy(
+                        saving = false,
+                        savedAs = name ?: it.savedAs,
+                        savedModel = if (name != null) model else it.savedModel,
+                    )
+                }
                 Toast.makeText(
                     this,
                     if (name == null) getString(R.string.save_failed) else getString(R.string.saved_to, name),
@@ -208,7 +229,16 @@ class EditActivity : ComponentActivity() {
         onDelete: (Int) -> Unit,
         onDeleteCancelled: () -> Unit,
         onDeleteConfirmed: () -> Unit,
+        onLeave: () -> Unit,
+        onLeaveCancelled: () -> Unit,
+        onLeaveConfirmed: () -> Unit,
     ) {
+        // Back closes the adjust screen when one is open, and otherwise leaves the capture
+        // -- after asking, when leaving would lose what has not been saved
+        val ready = state as? State.Ready
+        BackHandler(enabled = ready != null && (ready.adjusting != null || unsavedWork(ready.savedModel, ready.model))) {
+            if (ready?.adjusting != null) onAdjustDone() else onLeave()
+        }
         if (state is State.Ready && state.adjusting != null) {
             val target = state.adjusting
             AdjustSeamScreen(
@@ -278,6 +308,9 @@ class EditActivity : ComponentActivity() {
                                 onCancel = onDeleteCancelled,
                                 onConfirm = onDeleteConfirmed,
                             )
+                        }
+                        if (state.leaving) {
+                            LeaveDialog(onCancel = onLeaveCancelled, onConfirm = onLeaveConfirmed)
                         }
                     }
                 }
@@ -430,6 +463,28 @@ class EditActivity : ComponentActivity() {
             },
             dismissButton = {
                 TextButton(onClick = onCancel, modifier = Modifier.testTag("delete-cancel")) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
+
+    /** The question before unsaved work is left behind: only Leave closes the screen. */
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun LeaveDialog(onCancel: () -> Unit, onConfirm: () -> Unit) {
+        AlertDialog(
+            onDismissRequest = onCancel,
+            modifier = Modifier.semantics { testTagsAsResourceId = true },
+            title = { Text(stringResource(R.string.leave_title)) },
+            text = { Text(stringResource(R.string.leave_message)) },
+            confirmButton = {
+                TextButton(onClick = onConfirm, modifier = Modifier.testTag("leave-confirm")) {
+                    Text(stringResource(R.string.leave_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onCancel, modifier = Modifier.testTag("leave-cancel")) {
                     Text(stringResource(R.string.cancel))
                 }
             },
