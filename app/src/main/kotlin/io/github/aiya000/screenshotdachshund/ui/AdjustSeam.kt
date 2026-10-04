@@ -38,25 +38,6 @@ import kotlin.math.roundToInt
 /** How many rows a tap on the fine buttons moves an edge. */
 private const val STEP_ROWS = 10
 
-/** A thin bar drawn at a seam of the joined image, with the way into adjusting it. */
-@Composable
-fun SeamBar(seam: Int, onAdjust: (Int) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        OutlinedButton(
-            onClick = { onAdjust(seam) },
-            modifier = Modifier.testTag("adjust-$seam"),
-        ) {
-            Text(stringResource(R.string.adjust_seam))
-        }
-    }
-}
-
 /**
  * Adjusting one seam: the page above it around the row where it stops, and the page below
  * it around the row where it starts, each with the edge drawn across it. Dragging a picture
