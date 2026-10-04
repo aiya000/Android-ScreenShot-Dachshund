@@ -328,9 +328,9 @@ class DachshundService : AccessibilityService() {
             val enabled = Settings.Secure.getString(
                 context.contentResolver,
                 Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-            ) ?: return false
+            )
             val self = ComponentName(context, DachshundService::class.java)
-            return enabled.split(':').any { ComponentName.unflattenFromString(it) == self }
+            return EnabledServices.lists(enabled, self.flattenToString())
         }
     }
 }

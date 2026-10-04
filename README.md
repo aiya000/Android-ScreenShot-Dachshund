@@ -22,7 +22,9 @@ each seam, stripped of a page, and saved.
 
 ## How it works
 
-1. Switch the app's accessibility service on, once, in the system's accessibility settings
+1. Switch the app's accessibility service on, once, in the system's accessibility settings. The
+   app asks for this itself whenever it is opened with the service off, and its button lands in
+   the accessibility list on the service's own row
 2. Open the app to capture, then tap the "Scrolling screenshot" quick-settings tile (or the
    app's own "Start a capture" button). A small bar floats over the app
 3. Tap Start. The service takes a screenshot, scrolls the app, takes another, and goes on until
