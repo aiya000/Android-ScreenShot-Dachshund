@@ -47,12 +47,28 @@ class CaptureFiles(val dir: File) {
     companion object {
         private const val JOINED_NAME = "joined.png"
         private const val INSETS_NAME = "insets.txt"
+        private const val DIR_PREFIX = "capture-"
 
-        /** A new, empty folder for a capture starting now. */
-        fun create(context: Context): CaptureFiles {
+        /**
+         * A new, empty folder for a capture starting now. The folders of earlier captures
+         * are swept away first, except [keep]: the ones an edit screen still shows, which
+         * Save still needs. Nothing else ever removes them, and a day of captures would
+         * otherwise fill the cache.
+         */
+        fun create(context: Context, keep: Collection<File> = emptyList()): CaptureFiles {
             val root = File(context.cacheDir, "captures").apply { mkdirs() }
-            val dir = File(root, "capture-${System.currentTimeMillis()}").apply { mkdirs() }
+            sweep(root, keep)
+            val dir = File(root, "$DIR_PREFIX${System.currentTimeMillis()}").apply { mkdirs() }
             return CaptureFiles(dir)
+        }
+
+        /** Deletes every capture folder under [root] but those in [keep]. */
+        fun sweep(root: File, keep: Collection<File>) {
+            val kept = keep.map { it.canonicalFile }.toSet()
+            root.listFiles { f -> f.isDirectory && f.name.startsWith(DIR_PREFIX) }
+                .orEmpty()
+                .filter { it.canonicalFile !in kept }
+                .forEach { it.deleteRecursively() }
         }
 
         fun open(path: String): CaptureFiles = CaptureFiles(File(path))

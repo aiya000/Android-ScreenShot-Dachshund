@@ -136,7 +136,9 @@ class DachshundService : AccessibilityService() {
         if (session != null) return
         val session = CaptureSession()
         this.session = session
-        files = CaptureFiles.create(this).also { recordSystemBars(it) }
+        // Earlier captures are swept from the cache here, all but the ones an edit
+        // screen is still showing
+        files = CaptureFiles.create(this, keep = EditActivity.foldersBeingEdited()).also { recordSystemBars(it) }
         pageCount = 0
         overlay?.showCapturing()
         perform(session.start())

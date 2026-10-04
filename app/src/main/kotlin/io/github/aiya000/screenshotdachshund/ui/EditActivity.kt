@@ -140,10 +140,17 @@ class EditActivity : ComponentActivity() {
         load(dir)
     }
 
+    override fun onDestroy() {
+        if (::files.isInitialized) stopShowing(files)
+        super.onDestroy()
+    }
+
     /** Shows the capture in [dir]: a loading screen first, the edit screen once the pages are joined. */
     private fun load(dir: String) {
         val loading = CaptureFiles.open(dir)
+        if (::files.isInitialized) stopShowing(files)
         files = loading
+        synchronized(showing) { showing += loading.dir }
         state = State.Loading
         Log.d(TAG, "editing ${loading.dir.name}")
         thread(name = "load") {
@@ -491,9 +498,23 @@ class EditActivity : ComponentActivity() {
         )
     }
 
+    private fun stopShowing(files: CaptureFiles) {
+        synchronized(showing) { showing -= files.dir }
+    }
+
     companion object {
         private const val TAG = "Dachshund"
         private const val EXTRA_DIR = "dir"
+
+        /**
+         * The capture folders edit screens are showing right now. A capture that starts
+         * sweeps the other folders from the cache; these have to stay, since their Save
+         * still reads them.
+         */
+        private val showing = mutableSetOf<java.io.File>()
+
+        /** The capture folders an edit screen still shows, for the sweep to leave alone. */
+        fun foldersBeingEdited(): List<java.io.File> = synchronized(showing) { showing.toList() }
 
         fun intent(context: Context, files: CaptureFiles): Intent =
             Intent(context, EditActivity::class.java).putExtra(EXTRA_DIR, files.dir.path)
