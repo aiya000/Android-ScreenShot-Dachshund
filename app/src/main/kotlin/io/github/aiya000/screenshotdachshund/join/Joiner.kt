@@ -11,6 +11,9 @@ data class Cut(val pageIndex: Int, val fromRow: Int, val toRow: Int) {
     val height: Int get() = toRow - fromRow
 }
 
+/** Where a page stops being shown ([toRow], a row of that page) and where the page after it starts ([fromRow], a row of its own). */
+data class Seam(val toRow: Int, val fromRow: Int)
+
 /**
  * Works out how the pages of one capture fit together.
  *
@@ -57,17 +60,51 @@ object Joiner {
             val prev = pages[cuts.last().pageIndex]
             val next = pages[i]
             if (next.contentEquals(prev)) continue
-
-            val contentEnd = prev.height - fixed.bottom
-            val overlap = findOverlap(prev, next, fixed)
-            val fromRow = if (overlap == null) fixed.top else max(fixed.top, contentEnd - overlap)
             // Nothing new on this page (the clock moved on, the list did not): the page
             // before keeps its bottom bar and this one is left out
-            if (fromRow >= contentEnd) continue
-            cuts[cuts.lastIndex] = cuts.last().copy(toRow = contentEnd)
-            cuts += Cut(i, fromRow, next.height)
+            val seam = seam(prev, next, fixed) ?: continue
+            cuts[cuts.lastIndex] = cuts.last().copy(toRow = seam.toRow)
+            cuts += Cut(i, seam.fromRow, next.height)
         }
         return cuts
+    }
+
+    /**
+     * Where [prev] hands over to [next], or null when [next] shows nothing that [prev] did
+     * not already show.
+     *
+     * [prev] stops at the bottom of its content, unless the bottom of its content is
+     * something [next] does not have at the same place: a browser's URL bar sits at the
+     * bottom of the first page and is gone from the page after it, once the page has
+     * scrolled. Then [prev] stops where its rows stop being alike to their counterparts in
+     * [next], and [next] starts right under that, where the content under the bar is to
+     * be seen. Either way the two meet at a row they share, so the image reads on without
+     * a step.
+     */
+    fun seam(prev: PixelRows, next: PixelRows, fixed: FixedEdge): Seam? {
+        val contentEnd = prev.height - fixed.bottom
+        val distance = findOverlap(prev, next, fixed) ?: return Seam(contentEnd, fixed.top)
+        if (distance <= 0 || contentEnd - distance < fixed.top) return null
+        val toRow = agreeingEnd(prev, next, distance, fixed.top + distance, contentEnd)
+        return Seam(toRow, toRow - distance)
+    }
+
+    /**
+     * One past the lowest row of [prev] in `[from, contentEnd)` that shows something and
+     * is alike to its counterpart in [next], [distance] rows up. Rows under it are a bar
+     * that only [prev] has, or blank rows that look the same on both pages anyway and so
+     * may as well come from [next]. [contentEnd] when no row agrees.
+     */
+    private fun agreeingEnd(prev: PixelRows, next: PixelRows, distance: Int, from: Int, contentEnd: Int): Int {
+        // (A counterpart has to exist: the pages of one capture are the same height, but a
+        // shorter next page would end sooner)
+        var r = min(contentEnd, next.height + distance) - 1
+        while (r >= from) {
+            val sketch = prev.rowSketch(r)
+            if (RowSketch.textured(sketch) && RowSketch.alike(sketch, next.rowSketch(r - distance))) return r + 1
+            r--
+        }
+        return contentEnd
     }
 
     /**

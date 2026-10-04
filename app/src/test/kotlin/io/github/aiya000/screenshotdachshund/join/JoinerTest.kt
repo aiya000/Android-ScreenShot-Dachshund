@@ -225,3 +225,88 @@ class JoinerToleranceTest {
         assertNull(Joiner.findOverlap(a, b, edge))
     }
 }
+
+/**
+ * Firefox keeps its URL bar at the bottom of the screen and hides it once the page
+ * scrolls, so the first page carries a bar at the bottom of its content that no later
+ * page has. The join has to cut the first page above that bar and take the rows under it
+ * from the next page, where they are visible.
+ */
+class JoinerTrailingBarTest {
+
+    private val height = 40
+    private val top = 5
+    private val bottom = 3
+    private val edge = FixedEdge(top, bottom)
+    private val contentEnd = height - bottom
+
+    private fun shot(scroll: Int, contentId: (Int) -> Int = { it }) =
+        TestPages.screenshot(height, scroll, top, bottom, contentId)
+
+    private fun barred(scroll: Int, bar: Int, contentId: (Int) -> Int = { it }) =
+        TestPages.screenshotWithBottomBar(height, scroll, top, bottom, bar, contentId)
+
+    @Test
+    fun `a bar only the first page has at its bottom is cut away, and the next page starts under it`() {
+        val cuts = Joiner.layout(listOf(barred(0, bar = 6), shot(12)), edge)
+
+        assertEquals(
+            listOf(
+                Cut(0, 0, contentEnd - 6),
+                Cut(1, (contentEnd - 6) - 12, height),
+            ),
+            cuts,
+        )
+    }
+
+    @Test
+    fun `the seams after the bar are cut where they always were`() {
+        val cuts = Joiner.layout(listOf(barred(0, bar = 6), shot(12), shot(24)), edge)
+
+        assertEquals(
+            listOf(
+                Cut(0, 0, contentEnd - 6),
+                Cut(1, (contentEnd - 6) - 12, contentEnd),
+                Cut(2, contentEnd - 12, height),
+            ),
+            cuts,
+        )
+    }
+
+    @Test
+    fun `a blank row under the bar does not pass for content that agrees`() {
+        // The bar has a blank row of padding above and below its 4 textured rows, and the
+        // page happens to be blank where that padding lies (content rows 26 and 31), so
+        // those two rows are alike on both pages without saying anything.
+        val padded: (Int) -> Int = { if (it == 26 || it == 31) TestPages.BLANK else it }
+        val first = TestPages.fromRowIds(
+            (0 until height).map { y ->
+                when {
+                    y < top -> 1_000_000 + y
+                    y >= contentEnd -> 2_000_000 + y
+                    y in 32..35 -> 5_000_000 + y
+                    else -> padded(y - top)
+                }
+            },
+        )
+
+        val cuts = Joiner.layout(listOf(first, shot(12, padded)), edge)
+
+        assertEquals(listOf(Cut(0, 0, 31), Cut(1, 31 - 12, height)), cuts)
+    }
+
+    @Test
+    fun `rows that differ in the middle of the overlap do not move the cut`() {
+        // Content rows 20..29 look different on the second page: an image came in.
+        val cuts = Joiner.layout(listOf(shot(0), shot(12) { if (it in 20..29) 9_000_000 + it else it }), edge)
+
+        assertEquals(listOf(Cut(0, 0, contentEnd), Cut(1, contentEnd - 12, height)), cuts)
+    }
+
+    @Test
+    fun `a page that scrolled nothing is still left out, bar or no bar`() {
+        val cuts = Joiner.layout(listOf(barred(0, bar = 6), barred(0, bar = 6) { if (it == 3) 9 else it }), edge)
+
+        assertEquals(listOf(Cut(0, 0, height)), cuts)
+    }
+}

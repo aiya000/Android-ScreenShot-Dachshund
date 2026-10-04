@@ -76,6 +76,12 @@ fun CutModel.removeCut(index: Int): CutModel {
     return copy(cuts = remaining)
 }
 
+/** The model with the upper edge of seam [seam] put at [toRow] of its page, kept inside the cut. */
+fun CutModel.withUpperEdge(seam: Int, toRow: Int): CutModel {
+    val current = upperEdge(seam)
+    return moveUpperEdge(seam, toRow - current)
+}
+
 /** The model with the lower edge of seam [seam] put at [fromRow] of its page, kept inside the cut. */
 fun CutModel.withLowerEdge(seam: Int, fromRow: Int): CutModel {
     val current = lowerEdge(seam)
@@ -83,15 +89,14 @@ fun CutModel.withLowerEdge(seam: Int, fromRow: Int): CutModel {
 }
 
 /**
- * The model with seam [seam] joined afresh from the pages themselves: how far the page
- * below moved from the page above decides where it starts, the way the first layout did.
- * For two pages that became neighbours when the one between them was removed.
+ * The model with seam [seam] joined afresh from the pages themselves: where the page above
+ * stops and where the page below starts are decided the way the first layout decided them.
+ * For two pages that became neighbours when the one between them was removed. A page
+ * below that shows nothing new leaves the seam as it is.
  */
 fun CutModel.rejoinSeam(seam: Int, pages: List<io.github.aiya000.screenshotdachshund.image.PixelRows>, fixed: FixedEdge): CutModel {
     val prev = pages[cuts[seam].pageIndex]
     val next = pages[cuts[seam + 1].pageIndex]
-    val contentEnd = prev.height - fixed.bottom
-    val overlap = Joiner.findOverlap(prev, next, fixed)
-    val fromRow = if (overlap == null) fixed.top else maxOf(fixed.top, contentEnd - overlap)
-    return withLowerEdge(seam, fromRow)
+    val joined = Joiner.seam(prev, next, fixed) ?: return this
+    return withUpperEdge(seam, joined.toRow).withLowerEdge(seam, joined.fromRow)
 }

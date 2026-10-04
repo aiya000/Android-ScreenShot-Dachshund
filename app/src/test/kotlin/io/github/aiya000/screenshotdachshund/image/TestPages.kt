@@ -9,6 +9,12 @@ object TestPages {
 
     const val WIDTH = 32
 
+    /**
+     * The id of a row that shows nothing: one flat grey, so that its sketch is not
+     * textured. Every other id gives a row with a pattern across it.
+     */
+    const val BLANK = 0x808080
+
     /** The first pixel of a row of id [id]: the id itself in the colour channels, which is what [rowIds] reads back. */
     fun pixelOf(id: Int): Int = (0xFF shl 24) or (id and 0xFFFFFF)
 
@@ -18,6 +24,7 @@ object TestPages {
      * neighbouring ids were shifted copies of each other).
      */
     fun pixelAt(id: Int, x: Int): Int {
+        if (id == BLANK) return pixelOf(BLANK)
         var h = id.toLong() * -0x61c8864680b583ebL + (x / 2 + 1).toLong() * -0x40a7b892e31b1a47L
         h = h xor (h ushr 31)
         h *= -0x6b2fb644ecceee15L
@@ -53,6 +60,30 @@ object TestPages {
             when {
                 y < top -> 1_000_000 + y
                 y >= height - bottom -> 2_000_000 + y
+                else -> contentId(scroll + (y - top))
+            }
+        }
+        return fromRowIds(ids)
+    }
+
+    /**
+     * A [screenshot] with a bar of [bar] rows lying over the bottom of its content, the
+     * way a browser's bottom URL bar does before the page is scrolled. The bar's rows are
+     * unlike any content row and unlike the rows of any other page.
+     */
+    fun screenshotWithBottomBar(
+        height: Int,
+        scroll: Int,
+        top: Int = 0,
+        bottom: Int = 0,
+        bar: Int,
+        contentId: (Int) -> Int = { it },
+    ): PixelRows {
+        val ids = (0 until height).map { y ->
+            when {
+                y < top -> 1_000_000 + y
+                y >= height - bottom -> 2_000_000 + y
+                y >= height - bottom - bar -> 5_000_000 + y
                 else -> contentId(scroll + (y - top))
             }
         }
