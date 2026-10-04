@@ -322,23 +322,47 @@ swipes_done() {
     rg -c 'swipe done' <<< "$log" || echo 0
 }
 
+# The quick-settings tile, as the status bar names it
+TILE="$PACKAGE/io.github.aiya000.screenshotdachshund.service.CaptureTile"
+
+# Puts the tile into the quick settings, so that a script can press it the way the user does
+add_tile() {
+    "${ADB[@]}" shell cmd statusbar add-tile "$TILE" > /dev/null
+    sleep 1
+}
+
 # A whole capture of the system settings, from the app's own start button to the edit screen.
-# Leaves the number of pages in CAPTURED_PAGES. Each step reports through pass/fail
+# Leaves the number of pages in CAPTURED_PAGES. Each step reports through pass/fail.
+#
+# With CAPTURE_FROM=tile the capture is started from the quick-settings tile instead of the
+# app's home screen (add_tile first). The two leave the app's task in different shapes: from
+# the home screen the task's root is the home activity, from the tile it is the edit screen
+# itself, and some bugs only show in one of them
 capture_the_settings() {
     local prefix="${1:-cap}"
 
-    step "open the app and start a capture from its button"
     logcat_reset
-    "${ADB[@]}" shell am start -W -n "$PACKAGE/io.github.aiya000.screenshotdachshund.MainActivity" > /dev/null
-    sleep 2
-    screenshot "$prefix-home"
-    if ui_wait_text "Start a capture" 10 "$prefix-home"; then
-        pass "the home screen is up"
+    if [ "${CAPTURE_FROM:-app}" = tile ]; then
+        step "press the quick-settings tile"
+        # A tile only listens while the panel is open, so the panel is pulled down first;
+        # the tile itself collapses it again when it starts its activity
+        "${ADB[@]}" shell cmd statusbar expand-settings
+        sleep 2
+        "${ADB[@]}" shell cmd statusbar click-tile "$TILE" > /dev/null
+        sleep 2
     else
-        fail "the home screen did not come up"
+        step "open the app and start a capture from its button"
+        "${ADB[@]}" shell am start -W -n "$PACKAGE/io.github.aiya000.screenshotdachshund.MainActivity" > /dev/null
+        sleep 2
+        screenshot "$prefix-home"
+        if ui_wait_text "Start a capture" 10 "$prefix-home"; then
+            pass "the home screen is up"
+        else
+            fail "the home screen did not come up"
+        fi
+        ui_tap_text "Start a capture" "$prefix-start"
+        sleep 1
     fi
-    ui_tap_text "Start a capture" "$prefix-start"
-    sleep 1
 
     step "the app stepped aside and the floating bar is on screen"
     if wait_for_bar 10; then
