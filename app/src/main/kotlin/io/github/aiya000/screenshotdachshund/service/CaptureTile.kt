@@ -10,12 +10,15 @@ import io.github.aiya000.screenshotdachshund.ui.StartActivity
 /**
  * The quick-settings tile. Tapping it closes the panel and floats the start button over
  * the app that was on screen, which is where the capture is wanted.
+ *
+ * The tile is always drawn as inactive: it has no on/off state of its own, a tap simply
+ * starts something, and a highlighted tile would read as "something is switched on".
  */
 class CaptureTile : TileService() {
 
     override fun onStartListening() {
         qsTile?.apply {
-            state = if (DachshundService.instance != null) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+            state = Tile.STATE_INACTIVE
             updateTile()
         }
     }
