@@ -103,6 +103,7 @@ class PngWriterTest {
                 for (x in 0 until width) out[x] = (y * 2654435761L.toInt() + x * 40503) or 0xFF000000.toInt()
             }
             override fun rowHash(y: Int): Long = y.toLong()
+            override fun rowSketch(y: Int): IntArray = IntArray(RowSketch.SAMPLES)
         }
 
         val decoded = roundTrip(image)

@@ -10,6 +10,7 @@ class BitmapPixelRows(private val bitmap: Bitmap) : PixelRows {
 
     private val hashes = LongArray(height)
     private val hashed = BooleanArray(height)
+    private val sketches = arrayOfNulls<IntArray>(height)
     private val scratch = IntArray(width)
 
     override fun copyRow(y: Int, out: IntArray) {
@@ -17,16 +18,28 @@ class BitmapPixelRows(private val bitmap: Bitmap) : PixelRows {
     }
 
     override fun rowHash(y: Int): Long {
-        if (!hashed[y]) {
-            synchronized(scratch) {
-                copyRow(y, scratch)
-                hashes[y] = hashRow(scratch, width)
-            }
-            hashed[y] = true
-        }
+        if (!hashed[y]) read(y)
         return hashes[y]
+    }
+
+    override fun rowSketch(y: Int): IntArray {
+        if (sketches[y] == null) read(y)
+        return sketches[y]!!
+    }
+
+    /** One pass over the row for both its hash and its sketch. */
+    private fun read(y: Int) {
+        synchronized(scratch) {
+            copyRow(y, scratch)
+            hashes[y] = hashRow(scratch, width)
+            hashed[y] = true
+            sketches[y] = RowSketch.of(scratch, width)
+        }
     }
 
     /** Every row hash at once, for a page that is about to be let go of. */
     fun allRowHashes(): LongArray = LongArray(height) { rowHash(it) }
+
+    /** Every row sketch at once, for a page that is about to be let go of. */
+    fun allRowSketches(): Array<IntArray> = Array(height) { rowSketch(it) }
 }

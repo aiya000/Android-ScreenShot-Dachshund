@@ -17,13 +17,17 @@ class StoredPage(
     override val width: Int,
     override val height: Int,
     private val hashes: LongArray,
+    private val sketches: Array<IntArray>,
 ) : PixelRows {
 
     init {
         require(hashes.size == height) { "${hashes.size} hashes for $height rows" }
+        require(sketches.size == height) { "${sketches.size} sketches for $height rows" }
     }
 
     override fun rowHash(y: Int): Long = hashes[y]
+
+    override fun rowSketch(y: Int): IntArray = sketches[y]
 
     /** Not for reading pixels; [decode] gives a page that can. */
     override fun copyRow(y: Int, out: IntArray) {
@@ -45,13 +49,13 @@ class StoredPage(
                 check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)) { "cannot write ${file.name}" }
             }
             val rows = BitmapPixelRows(bitmap)
-            return StoredPage(file, bitmap.width, bitmap.height, rows.allRowHashes())
+            return StoredPage(file, bitmap.width, bitmap.height, rows.allRowHashes(), rows.allRowSketches())
         }
 
         /** Reads a page back from disk, hashing it once. */
         fun load(file: File): StoredPage {
             val rows = decodeFile(file)
-            return StoredPage(file, rows.width, rows.height, rows.allRowHashes())
+            return StoredPage(file, rows.width, rows.height, rows.allRowHashes(), rows.allRowSketches())
         }
 
         private fun decodeFile(file: File): BitmapPixelRows {
