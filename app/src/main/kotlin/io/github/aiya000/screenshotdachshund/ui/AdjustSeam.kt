@@ -148,7 +148,9 @@ private fun SeamPicture(
                     change.consume()
                     // The picture is drawn at this many page rows per pixel on screen
                     val rowsPerPixel = upper.width.toFloat() * capture.sample / size.width
-                    val rows = (dragAmount * rowsPerPixel).roundToInt()
+                    // The content follows the finger, as a scroll does: dragging up slides the
+                    // page up, which shows rows further down it, so the edge moves down the page
+                    val rows = (-dragAmount * rowsPerPixel).roundToInt()
                     if (change.position.y < size.height / 2f) onMoveUpperEdge(rows) else onMoveLowerEdge(rows)
                 }
             },
