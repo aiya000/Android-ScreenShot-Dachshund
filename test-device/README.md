@@ -25,6 +25,7 @@ detection, the overlap search, the PNG writer -- needs no device and lives in `a
 ANDROID_SERIAL=emulator-5554 test-device/drive/10-capture-the-settings-and-save.sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/20-adjust-a-seam.sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/30-delete-a-page.sh
+ANDROID_SERIAL=emulator-5554 test-device/drive/40-prompt-when-the-service-is-off.sh
 ```
 
 - `10`: a whole capture of the system settings, from the app's start button to a saved PNG that
@@ -33,6 +34,8 @@ ANDROID_SERIAL=emulator-5554 test-device/drive/30-delete-a-page.sh
   Adjust dialog; the image saved afterwards has to be exactly fifty rows taller
 - `30`: the same capture, then the first page's Delete: Cancel leaves the saved height as it was,
   Delete makes the next save shorter
+- `40`: with the service off, the app asks to switch it on; Later puts it aside, a fresh start asks
+  again, and the button lands in the accessibility list on the service's row
 
 Each run keeps its screenshots, view-tree dumps and logs under `test-device/runs/<timestamp>/`,
 so a failure can be looked at afterwards. The `runs/` folder is not committed.

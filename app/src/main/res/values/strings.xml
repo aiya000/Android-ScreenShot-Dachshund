@@ -18,6 +18,13 @@
     <string name="start_capture">Start a capture</string>
     <string name="home_tile_hint">Tip: add the \"Scrolling screenshot\" tile to the quick settings to start a capture from any app.</string>
     <string name="service_not_enabled">The accessibility service is not on.</string>
+    <string name="settings_not_opened">The accessibility settings could not be opened.</string>
+
+    <!-- the question asked while the service is off -->
+    <string name="prompt_title">Switch the accessibility service on</string>
+    <string name="prompt_message">The app takes its screenshots and scrolls the page through an accessibility service, and that service is off. Nothing can be captured until it is switched on in the system settings. The button takes you to the switch.</string>
+    <string name="prompt_open">Open the settings</string>
+    <string name="prompt_later">Later</string>
 
     <!-- the floating bar -->
     <string name="overlay_start">Start</string>

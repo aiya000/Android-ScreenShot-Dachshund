@@ -12,6 +12,12 @@
     <string name="start_capture">撮影を始める</string>
     <string name="home_tile_hint">ヒント: クイック設定に「スクロールスクショ」タイルを追加すると、どのアプリからでも撮影を始められます。</string>
     <string name="service_not_enabled">ユーザー補助サービスがオフです。</string>
+    <string name="settings_not_opened">ユーザー補助の設定を開けませんでした。</string>
+
+    <string name="prompt_title">ユーザー補助サービスをオンにしてください</string>
+    <string name="prompt_message">このアプリはユーザー補助サービスを通してスクリーンショットの取得とスクロールを行いますが、そのサービスがオフになっています。システム設定でオンにするまで撮影できません。ボタンを押すと、その設定画面を開きます。</string>
+    <string name="prompt_open">設定を開く</string>
+    <string name="prompt_later">あとで</string>
 
     <string name="overlay_start">撮影開始</string>
     <string name="overlay_stop">停止</string>
