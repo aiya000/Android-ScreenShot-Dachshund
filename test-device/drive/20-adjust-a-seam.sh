@@ -65,6 +65,36 @@ if [ -n "$first" ] && [ -n "$second" ]; then
     fi
 fi
 
+step "drag the upper half of the seam picture down: the page above follows the finger, so it ends sooner"
+ui_scroll_to_id "adjust-0" "20-scroll-2"
+ui_tap_id "adjust-0" "20-adjust-2"
+ui_wait_id "seam-picture" 10 "20-picture" || fail "no seam picture"
+dump="$(ui_dump "20-picture-bounds")"
+read -r left top right bottom < <(python3 "$DRIVE_DIR/ui.py" "$dump" --resource-id "seam-picture" --bounds)
+x=$(((left + right) / 2))
+# the picture is as wide as the page, so one screen pixel is one page row; a slow drag down
+# by 200 px in the upper half moves the upper edge up by about 200 rows, less the touch slop
+# (some twenty pixels) that a drag gesture swallows before it starts to count
+y_from=$((top + (bottom - top) / 4))
+y_to=$((y_from + 200))
+"${ADB[@]}" shell input swipe "$x" "$y_from" "$x" "$y_to" 600
+sleep 1
+screenshot "20-dragged"
+ui_tap_id "adjust-done" "20-done-2"
+sleep 1
+if third="$(save_and_name "20-save-3")"; then
+    read -r w3 h3 < <(png_size "/sdcard/Pictures/ScreenShot-Dachshund/$third")
+    note "after the drag ${w3}x${h3} (was $h2)"
+    shrunk=$((h2 - h3))
+    if [ "$shrunk" -ge 160 ] && [ "$shrunk" -le 205 ]; then
+        pass "about two hundred rows shorter: the content followed the finger"
+    else
+        fail "expected about 200 rows shorter, got $shrunk"
+    fi
+else
+    fail "nothing was saved after the drag"
+fi
+
 refute_log 'AndroidRuntime' "the app did not crash"
 logcat_dump "20-end" > /dev/null
 finish
