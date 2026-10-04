@@ -1,27 +1,37 @@
 package io.github.aiya000.screenshotdachshund.image
 
 /**
- * Synthetic pages for the tests. A row is identified by an integer id; every pixel of
- * the row is derived from that id, so two rows are equal exactly when their ids are.
+ * Synthetic pages for the tests. A row is identified by an integer id; the pixels of the
+ * row are derived from that id and vary across the row, so two rows look alike exactly
+ * when their ids are equal, and rows of different ids are far apart by any measure.
  */
 object TestPages {
 
-    const val WIDTH = 8
+    const val WIDTH = 32
 
-    /** Every id handed out, so that [rowIds] can read a page back. */
-    private val idsByPixel = HashMap<Int, Int>()
+    /** The first pixel of a row of id [id]: the id itself in the colour channels, which is what [rowIds] reads back. */
+    fun pixelOf(id: Int): Int = (0xFF shl 24) or (id and 0xFFFFFF)
 
-    fun pixelOf(id: Int): Int {
-        val pixel = (id * 2654435761L).toInt() or 0xFF000000.toInt()
-        idsByPixel[pixel] = id
-        return pixel
+    /**
+     * A pixel of row [id] at column [x]: a strong, id-specific pattern across the row,
+     * well mixed so that no two ids come out alike by accident (a plain multiply did:
+     * neighbouring ids were shifted copies of each other).
+     */
+    fun pixelAt(id: Int, x: Int): Int {
+        var h = id.toLong() * -0x61c8864680b583ebL + (x / 2 + 1).toLong() * -0x40a7b892e31b1a47L
+        h = h xor (h ushr 31)
+        h *= -0x6b2fb644ecceee15L
+        h = h xor (h ushr 29)
+        val grey = (h and 0xFF).toInt()
+        return (0xFF shl 24) or (grey shl 16) or (grey shl 8) or grey
     }
 
     /** A page whose row ids are given one by one. */
     fun fromRowIds(ids: List<Int>, width: Int = WIDTH): PixelRows {
         val pixels = IntArray(width * ids.size)
         ids.forEachIndexed { y, id ->
-            for (x in 0 until width) pixels[y * width + x] = pixelOf(id)
+            pixels[y * width] = pixelOf(id)
+            for (x in 1 until width) pixels[y * width + x] = pixelAt(id, x)
         }
         return ArrayPixelRows(width, ids.size, pixels)
     }
@@ -49,11 +59,25 @@ object TestPages {
         return fromRowIds(ids)
     }
 
+    /** [page] with every pixel nudged a little, the way a resampled scroll or a recompression leaves it. */
+    fun nudged(page: PixelRows, by: Int = 3): PixelRows {
+        val pixels = IntArray(page.width * page.height)
+        val row = IntArray(page.width)
+        for (y in 0 until page.height) {
+            page.copyRow(y, row)
+            for (x in 0 until page.width) {
+                val grey = ((row[x] and 0xFF) + by).coerceIn(0, 255)
+                pixels[y * page.width + x] = (0xFF shl 24) or (grey shl 16) or (grey shl 8) or grey
+            }
+        }
+        return ArrayPixelRows(page.width, page.height, pixels)
+    }
+
     fun rowIds(page: PixelRows): List<Int> {
         val row = IntArray(page.width)
         return (0 until page.height).map { y ->
             page.copyRow(y, row)
-            idsByPixel.getValue(row[0])
+            row[0] and 0xFFFFFF
         }
     }
 }

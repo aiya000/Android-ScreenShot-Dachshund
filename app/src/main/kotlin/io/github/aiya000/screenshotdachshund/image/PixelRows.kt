@@ -20,6 +20,9 @@ interface PixelRows {
 
     /** A 64-bit hash of row [y]. Two rows with the same pixels hash alike. */
     fun rowHash(y: Int): Long
+
+    /** The [RowSketch] of row [y]: a few brightness samples, for telling rows alike that are not identical. */
+    fun rowSketch(y: Int): IntArray
 }
 
 /** The FNV-1a hash of the first [width] pixels, which is cheap and good enough to tell rows apart. */
@@ -60,6 +63,7 @@ class ArrayPixelRows(
 
     private val hashes = LongArray(height)
     private val hashed = BooleanArray(height)
+    private val sketches = arrayOfNulls<IntArray>(height)
 
     override fun copyRow(y: Int, out: IntArray) {
         System.arraycopy(pixels, y * width, out, 0, width)
@@ -72,4 +76,7 @@ class ArrayPixelRows(
         }
         return hashes[y]
     }
+
+    override fun rowSketch(y: Int): IntArray =
+        sketches[y] ?: RowSketch.of(pixels.copyOfRange(y * width, (y + 1) * width), width).also { sketches[y] = it }
 }

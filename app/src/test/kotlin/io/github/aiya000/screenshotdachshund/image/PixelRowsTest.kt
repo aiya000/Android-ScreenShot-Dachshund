@@ -32,7 +32,8 @@ class PixelRowsTest {
 
         page.copyRow(1, out)
 
-        assertTrue(out.all { it == TestPages.pixelOf(8) })
+        assertEquals(TestPages.pixelOf(8), out[0])
+        assertTrue((1 until out.size).all { x -> out[x] == TestPages.pixelAt(8, x) })
     }
 
     @Test
@@ -65,5 +66,40 @@ class DifferingRowsTest {
         val b = TestPages.fromRowIds(listOf(1, 2))
 
         assertEquals(Int.MAX_VALUE, a.differingRows(b))
+    }
+}
+
+class RowSketchTest {
+
+    @Test
+    fun `a sketch has sixteen samples of the row's brightness`() {
+        val page = TestPages.fromRowIds(listOf(1))
+
+        assertEquals(RowSketch.SAMPLES, page.rowSketch(0).size)
+    }
+
+    @Test
+    fun `rows that differ only a little look alike, rows of other content do not`() {
+        val a = TestPages.fromRowIds(listOf(1, 2))
+        val nudged = TestPages.nudged(a, by = 3)
+
+        assertTrue(RowSketch.alike(a.rowSketch(0), nudged.rowSketch(0)))
+        assertTrue(RowSketch.alike(a.rowSketch(1), nudged.rowSketch(1)))
+        assertFalse(RowSketch.alike(a.rowSketch(0), a.rowSketch(1)))
+    }
+
+    @Test
+    fun `a sketch is the mean brightness of each slice of the row`() {
+        val width = 32
+        val pixels = IntArray(width) { x -> if (x < 16) 0xFF000000.toInt() else 0xFFFFFFFF.toInt() }
+        val page = ArrayPixelRows(width, 1, pixels)
+
+        val sketch = page.rowSketch(0)
+
+        val half = RowSketch.SAMPLES / 2
+        assertEquals(0, sketch[0])
+        assertEquals(0, sketch[half - 1])
+        assertEquals(255, sketch[half])
+        assertEquals(255, sketch[RowSketch.SAMPLES - 1])
     }
 }

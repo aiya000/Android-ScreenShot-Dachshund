@@ -1,6 +1,7 @@
 package io.github.aiya000.screenshotdachshund.join
 
 import io.github.aiya000.screenshotdachshund.image.PixelRows
+import io.github.aiya000.screenshotdachshund.image.RowSketch
 
 /** How many rows at the top and at the bottom of every page are not part of the scrolling content. */
 data class FixedEdge(val top: Int, val bottom: Int)
@@ -44,15 +45,17 @@ object FixedEdges {
         return FixedEdge(maxOf(top, floor.top), maxOf(bottom, floor.bottom))
     }
 
+    // Rows are compared by their sketches: a bar that was resampled by a fraction of a
+    // pixel is still the same bar
     private fun equalLeadingRows(a: PixelRows, b: PixelRows, limit: Int): Int {
         var n = 0
-        while (n < limit && a.rowHash(n) == b.rowHash(n)) n++
+        while (n < limit && RowSketch.alike(a.rowSketch(n), b.rowSketch(n))) n++
         return n
     }
 
     private fun equalTrailingRows(a: PixelRows, b: PixelRows, limit: Int): Int {
         var n = 0
-        while (n < limit && a.rowHash(a.height - 1 - n) == b.rowHash(b.height - 1 - n)) n++
+        while (n < limit && RowSketch.alike(a.rowSketch(a.height - 1 - n), b.rowSketch(b.height - 1 - n))) n++
         return n
     }
 }

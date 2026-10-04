@@ -52,7 +52,7 @@ class DachshundService : AccessibilityService() {
     private var files: CaptureFiles? = null
     private var pageCount = 0
 
-    /** Set by the scroll event the swipe causes; only logged for now. */
+    /** Set by the scroll event the swipe causes; its absence, once seen, is the end of the page. */
     private var scrolledSinceSwipe = false
 
     override fun onServiceConnected() {
@@ -255,7 +255,7 @@ class DachshundService : AccessibilityService() {
         // Give the list time to settle before the next picture.
         mainHandler.postDelayed({
             Log.d(TAG, "swipe done, scrolled=$scrolledSinceSwipe")
-            session?.let { perform(it.onSwipeFinished()) }
+            session?.let { perform(it.onSwipeFinished(scrolled = scrolledSinceSwipe)) }
         }, SETTLE_MS)
     }
 
@@ -316,7 +316,7 @@ class DachshundService : AccessibilityService() {
         private const val REST_MS = 120L
 
         /** How long the page is given to settle after the swipe, overscroll stretch included. */
-        private const val SETTLE_MS = 800L
+        private const val SETTLE_MS = 1000L
 
         /** The running service, so that the app and the tile can reach it. */
         @Volatile

@@ -56,6 +56,9 @@ class CaptureSession(
     private var retries = 0
     private val collected = mutableListOf<PixelRows>()
 
+    /** Whether any swipe so far was reported as having scrolled the app. */
+    private var everScrolled = false
+
     /** The pages kept so far, in order. */
     val pages: List<PixelRows> get() = collected
 
@@ -90,9 +93,20 @@ class CaptureSession(
         return Command.TakeScreenshot
     }
 
-    /** The swipe is done and the page has settled. A stop asked for meanwhile still gets its last screenshot. */
-    fun onSwipeFinished(): Command {
+    /**
+     * The swipe is done and the page has settled. [scrolled] says whether the app reported
+     * a scroll for it. Once an app has reported scrolling, a swipe that scrolls nothing is
+     * the end of the page, and the capture ends there without another screenshot: at the
+     * end of a list Android stretches the content for a moment, and a page taken then
+     * fits nowhere. An app that never reports scrolling is judged by its pictures instead.
+     * A stop asked for meanwhile still gets its last screenshot.
+     */
+    fun onSwipeFinished(scrolled: Boolean = true): Command {
         check(state == State.Scrolling) { "no swipe was asked for in $state" }
+        if (!scrolled && everScrolled) {
+            return finish(if (stopRequested) FinishReason.Stopped else FinishReason.EndOfContent)
+        }
+        if (scrolled) everScrolled = true
         state = State.Capturing
         return Command.TakeScreenshot
     }

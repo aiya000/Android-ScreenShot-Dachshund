@@ -196,3 +196,48 @@ class CaptureSessionNearDuplicateTest {
         assertEquals(2, session.pages.size)
     }
 }
+
+class CaptureSessionScrollEventTest {
+
+    private fun page(scroll: Int) = TestPages.screenshot(height = 20, scroll = scroll)
+
+    @Test
+    fun `a swipe that scrolled nothing, in an app that did scroll before, ends the capture without another page`() {
+        val session = CaptureSession()
+        session.start()
+        session.onScreenshot(page(0))
+        assertEquals(Command.TakeScreenshot, session.onSwipeFinished(scrolled = true))
+        session.onScreenshot(page(10))
+
+        val finish = session.onSwipeFinished(scrolled = false) as Command.Finish
+
+        assertEquals(FinishReason.EndOfContent, finish.reason)
+        assertEquals(2, finish.pages.size)
+    }
+
+    @Test
+    fun `an app that never reports scrolling is judged by its pictures instead`() {
+        val session = CaptureSession()
+        session.start()
+        session.onScreenshot(page(0))
+
+        assertEquals(Command.TakeScreenshot, session.onSwipeFinished(scrolled = false))
+        session.onScreenshot(page(10))
+        assertEquals(Command.TakeScreenshot, session.onSwipeFinished(scrolled = false))
+    }
+
+    @Test
+    fun `a stop asked for before a swipe that scrolled nothing still finishes as stopped`() {
+        val session = CaptureSession()
+        session.start()
+        session.onScreenshot(page(0))
+        session.onSwipeFinished(scrolled = true)
+        session.onScreenshot(page(10))
+        session.onStopRequested()
+
+        val finish = session.onSwipeFinished(scrolled = false) as Command.Finish
+
+        assertEquals(FinishReason.Stopped, finish.reason)
+        assertEquals(2, finish.pages.size)
+    }
+}

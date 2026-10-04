@@ -183,3 +183,45 @@ class JoinerNothingNewTest {
         assertEquals(listOf(Cut(0, 0, height), Cut(2, height - 12, height)), cuts)
     }
 }
+
+
+class JoinerToleranceTest {
+
+    private val height = 60
+    private val top = 5
+    private val bottom = 3
+    private val edge = FixedEdge(top, bottom)
+
+    private fun shot(scroll: Int) =
+        io.github.aiya000.screenshotdachshund.image.TestPages.screenshot(height, scroll, top, bottom)
+
+    @Test
+    fun `an overlap is found although every row was nudged, as a resampled scroll leaves it`() {
+        val a = shot(0)
+        val b = io.github.aiya000.screenshotdachshund.image.TestPages.nudged(shot(12), by = 4)
+
+        assertEquals(12, Joiner.findOverlap(a, b, edge))
+    }
+
+    @Test
+    fun `an overlap is found although a block of rows changed, as a late-loading image leaves it`() {
+        // Content rows 20..29 look different on the second page: an image came in.
+        val a = shot(0)
+        val b = io.github.aiya000.screenshotdachshund.image.TestPages.screenshot(
+            height, 12, top, bottom,
+        ) { if (it in 20..29) 9_000_000 + it else it }
+
+        assertEquals(12, Joiner.findOverlap(a, b, edge))
+    }
+
+    @Test
+    fun `too few agreeing rows is no overlap at all`() {
+        // Only content rows 0..3 are shared; everything else on the second page is new.
+        val a = shot(0)
+        val b = io.github.aiya000.screenshotdachshund.image.TestPages.screenshot(
+            height, 12, top, bottom,
+        ) { if (it in 12..15) it else 9_000_000 + it }
+
+        assertNull(Joiner.findOverlap(a, b, edge))
+    }
+}

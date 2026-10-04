@@ -88,3 +88,15 @@ class FixedEdgesAtLeastTest {
         assertEquals(FixedEdge(5, 3), FixedEdges.detect(listOf(a), atLeast = FixedEdge(5, 3)))
     }
 }
+
+
+class FixedEdgesToleranceTest {
+
+    @Test
+    fun `bars that were nudged a little still count as fixed`() {
+        val a = TestPages.screenshot(height = 40, scroll = 0, top = 5, bottom = 3)
+        val b = TestPages.nudged(TestPages.screenshot(height = 40, scroll = 12, top = 5, bottom = 3), by = 3)
+
+        assertEquals(FixedEdge(top = 5, bottom = 3), FixedEdges.detect(listOf(a, b)))
+    }
+}

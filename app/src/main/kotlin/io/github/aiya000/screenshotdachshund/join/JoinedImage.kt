@@ -45,6 +45,11 @@ class JoinedImage(
         return page.rowHash(row)
     }
 
+    override fun rowSketch(y: Int): IntArray {
+        val (page, row) = locate(y)
+        return page.rowSketch(row)
+    }
+
     private fun locate(y: Int): Pair<PixelRows, Int> {
         require(y in 0 until height) { "row $y of $height" }
         var i = starts.binarySearch(y)
