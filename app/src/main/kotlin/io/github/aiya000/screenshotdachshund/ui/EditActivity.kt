@@ -99,7 +99,6 @@ class EditActivity : ComponentActivity() {
             finish()
             return
         }
-        files = CaptureFiles.open(dir)
 
         setContent {
             MaterialTheme {
@@ -117,9 +116,32 @@ class EditActivity : ComponentActivity() {
             }
         }
 
+        load(dir)
+    }
+
+    /**
+     * A capture finished while this screen was still up: the service sends its folder
+     * here rather than opening a second screen, and the new capture takes the old one's
+     * place. Whatever was not saved of the old one is left behind in the cache.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val dir = intent.getStringExtra(EXTRA_DIR) ?: return
+        setIntent(intent)
+        load(dir)
+    }
+
+    /** Shows the capture in [dir]: a loading screen first, the edit screen once the pages are joined. */
+    private fun load(dir: String) {
+        val loading = CaptureFiles.open(dir)
+        files = loading
+        state = State.Loading
+        Log.d(TAG, "editing ${loading.dir.name}")
         thread(name = "load") {
-            val result = runCatching { Joining.load(files) }
+            val result = runCatching { Joining.load(loading) }
             runOnUiThread {
+                // Another capture may have taken over while this one was being joined
+                if (files !== loading) return@runOnUiThread
                 state = result.fold(
                     onSuccess = { State.Ready(it, it.model, adjusting = null, deleting = null, savedAs = null, saving = false) },
                     onFailure = {

@@ -267,7 +267,7 @@ class DachshundService : AccessibilityService() {
         val files = files ?: return
         this.session = null
         this.files = null
-        Log.d(TAG, "finished: ${finish.reason}, ${finish.pages.size} pages")
+        Log.d(TAG, "finished: ${finish.reason}, ${finish.pages.size} pages, ${files.dir.name}")
 
         // Pages the session dropped (a duplicate at the end) are still on disk.
         val kept = finish.pages.mapNotNull { (it as? StoredPage)?.file }.toSet()
@@ -285,7 +285,16 @@ class DachshundService : AccessibilityService() {
 
         // The overlay is still up while the activity starts: a visible window of this
         // app is one of the things that lets a service start an activity at all.
-        startActivity(EditActivity.intent(this, files).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        //
+        // An edit screen may still be open from the capture before: with NEW_TASK alone
+        // the system would only bring that task back as it was, and this capture would
+        // never be shown. CLEAR_TOP and SINGLE_TOP hand the running screen this intent
+        // instead (EditActivity.onNewIntent), so it switches to the new capture.
+        startActivity(
+            EditActivity.intent(this, files).addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP,
+            ),
+        )
         removeOverlay()
     }
 
