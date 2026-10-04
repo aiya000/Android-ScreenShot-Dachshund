@@ -7,17 +7,23 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,9 +38,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -44,6 +52,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.aiya000.screenshotdachshund.R
 import io.github.aiya000.screenshotdachshund.join.CutModel
+import io.github.aiya000.screenshotdachshund.join.PreviewLayout
 import io.github.aiya000.screenshotdachshund.join.rejoinSeam
 import io.github.aiya000.screenshotdachshund.join.removeCut
 import io.github.aiya000.screenshotdachshund.storage.CaptureFiles
@@ -250,8 +259,9 @@ class EditActivity : ComponentActivity() {
     }
 
     /**
-     * The joined image, drawn from the page previews cut by cut, with a Delete button on
-     * every page and an Adjust button at every seam.
+     * The joined image exactly as it will be saved -- the cuts stacked with nothing between
+     * them -- and, beside it, an Adjust button level with each seam and a Delete button level
+     * with each page. A thin line across the image marks each seam.
      */
     @Composable
     private fun JoinedPreview(
@@ -261,42 +271,90 @@ class EditActivity : ComponentActivity() {
         onDelete: (Int) -> Unit,
         canDelete: Boolean,
     ) {
-        LazyColumn(
+        val density = LocalDensity.current
+        val controlsWidth = 104.dp
+        val buttonHeight = 40.dp
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .testTag("joined"),
         ) {
-            itemsIndexed(model.cuts) { index, cut ->
-                val preview = capture.previews[cut.pageIndex]
-                val top = cut.fromRow / capture.sample
-                val bottom = (cut.toRow / capture.sample).coerceAtMost(preview.height)
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    if (bottom > top) {
+            val imageWidth = maxWidth - controlsWidth
+            val previewWidth = capture.previews.first().width
+            val scale = with(density) { imageWidth.toPx() } / previewWidth
+            val layout = PreviewLayout.of(model, capture.sample, scale)
+            val totalHeight = with(density) { layout.totalHeight.toDp() }
+            val buttonHeightPx = with(density) { buttonHeight.roundToPx() }
+            val seamColor = MaterialTheme.colorScheme.primary
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .width(imageWidth)
+                        .height(totalHeight),
+                ) {
+                    for (segment in layout.segments) {
+                        if (segment.previewRows <= 0) continue
+                        val preview = capture.previews[model.cuts[segment.cutIndex].pageIndex]
                         Image(
                             painter = BitmapPainter(
                                 preview.asImageBitmap(),
-                                srcOffset = IntOffset(0, top),
-                                srcSize = IntSize(preview.width, bottom - top),
+                                srcOffset = IntOffset(0, segment.previewTop),
+                                srcSize = IntSize(preview.width, segment.previewRows),
                             ),
                             contentDescription = null,
-                            contentScale = ContentScale.FillWidth,
-                            modifier = Modifier.fillMaxWidth(),
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier
+                                .offset { IntOffset(0, segment.top) }
+                                .width(imageWidth)
+                                .height(with(density) { segment.height.toDp() }),
                         )
                     }
-                    if (canDelete) {
-                        OutlinedButton(
-                            onClick = { onDelete(index) },
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(8.dp)
-                                .testTag("delete-$index"),
-                        ) {
-                            Text(stringResource(R.string.delete_page))
+                    Canvas(modifier = Modifier.matchParentSize()) {
+                        for (y in layout.seamTops) {
+                            drawLine(
+                                color = seamColor,
+                                start = Offset(0f, y.toFloat()),
+                                end = Offset(size.width, y.toFloat()),
+                                strokeWidth = 2.dp.toPx(),
+                            )
                         }
                     }
                 }
-                if (index < model.seams) {
-                    SeamBar(seam = index, onAdjust = onAdjust)
+                Box(
+                    modifier = Modifier
+                        .width(controlsWidth)
+                        .height(totalHeight),
+                ) {
+                    if (canDelete) {
+                        for (segment in layout.segments) {
+                            val y = (segment.centre - buttonHeightPx / 2).coerceIn(0, maxOf(0, layout.totalHeight - buttonHeightPx))
+                            TextButton(
+                                onClick = { onDelete(segment.cutIndex) },
+                                modifier = Modifier
+                                    .offset { IntOffset(0, y) }
+                                    .width(controlsWidth)
+                                    .height(buttonHeight)
+                                    .testTag("delete-${segment.cutIndex}"),
+                            ) {
+                                Text(stringResource(R.string.delete_page))
+                            }
+                        }
+                    }
+                    layout.seamTops.forEachIndexed { seam, seamTop ->
+                        val y = (seamTop - buttonHeightPx / 2).coerceIn(0, maxOf(0, layout.totalHeight - buttonHeightPx))
+                        OutlinedButton(
+                            onClick = { onAdjust(seam) },
+                            modifier = Modifier
+                                .offset { IntOffset(0, y) }
+                                .width(controlsWidth)
+                                .height(buttonHeight)
+                                .testTag("adjust-$seam"),
+                        ) {
+                            Text(stringResource(R.string.adjust_seam))
+                        }
+                    }
                 }
             }
         }
