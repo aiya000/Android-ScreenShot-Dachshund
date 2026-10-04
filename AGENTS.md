@@ -11,6 +11,7 @@
 |---|---|---|
 | エミュレータのテストで、浮かぶバー（開始／停止）が画面に出ているのに「無い」と言われる。撮影がとつぜん止まる | `uiautomator dump` が他のユーザー補助サービスを unbind していた。バーは `dumpsys window` の座標で押す。`am force-stop` も有効化を外す。スワイプ中のタップは下のアプリに届く | [agents/tests/uiautomator-unbinds-the-service.md](./agents/tests/uiautomator-unbinds-the-service.md) |
 | ブラウザのページ（商品カードの格子など）で、ページ同士の重なりが見つからず結合がずれる | ブラウザは端数ピクセルでスクロールして再サンプリングするので行は完全一致しない。画像の上のスワイプで画像も変わる。行の比較を指紋の「近さ」にし、模様のある行だけで採点した | [agents/join/rows-rarely-match-pixel-for-pixel.md](./agents/join/rows-rarely-match-pixel-for-pixel.md) |
+| Firefox のように URL バーが下にあるブラウザで、最初の継ぎ目にバーが残る。実機でしか試せないと思われた | エミュレータに Mozilla のアーカイブの x86_64 APK を入れて、設定でバーを下にすれば再現できる。継ぎ目は「次ページと似ている最後の行」で切る | [agents/tests/firefox-on-the-emulator.md](./agents/tests/firefox-on-the-emulator.md) |
 
 ### この索引に足すこと
 

@@ -178,3 +178,35 @@ class RejoinSeamTest {
         assertEquals(Cut(2, top, height), rejoined.cuts[1])
     }
 }
+
+class RejoinSeamTrailingBarTest {
+
+    private val height = 40
+    private val top = 5
+    private val bottom = 3
+    private val edge = FixedEdge(top, bottom)
+
+    private fun shot(scroll: Int) =
+        io.github.aiya000.screenshotdachshund.image.TestPages.screenshot(height, scroll, top, bottom)
+
+    @Test
+    fun `a bar at the bottom of the page above is cut away when the seam is joined afresh`() {
+        val first = io.github.aiya000.screenshotdachshund.image.TestPages.screenshotWithBottomBar(height, 0, top, bottom, bar = 4)
+        val pages = listOf(first, shot(9), shot(18))
+        val model = CutModel(Joiner.layout(pages, edge), pages.map { it.height })
+
+        val rejoined = model.removeCut(1).rejoinSeam(0, pages, edge)
+
+        val toRow = (height - bottom) - 4
+        assertEquals(listOf(Cut(0, 0, toRow), Cut(2, toRow - 18, height)), rejoined.cuts)
+    }
+
+    @Test
+    fun `the upper edge of a seam can be set outright too`() {
+        val model = CutModel(listOf(Cut(0, 0, 90), Cut(1, 30, 90)), listOf(100, 100))
+
+        assertEquals(Cut(0, 0, 70), model.withUpperEdge(seam = 0, toRow = 70).cuts[0])
+        assertEquals(Cut(0, 0, 100), model.withUpperEdge(0, 500).cuts[0])
+        assertEquals(Cut(0, 0, 1), model.withUpperEdge(0, -5).cuts[0])
+    }
+}
