@@ -313,12 +313,13 @@ class EditActivity : ComponentActivity() {
                         )
                     }
                     Canvas(modifier = Modifier.matchParentSize()) {
+                        // a hairline: the seam is marked, not covered
                         for (y in layout.seamTops) {
                             drawLine(
                                 color = seamColor,
                                 start = Offset(0f, y.toFloat()),
                                 end = Offset(size.width, y.toFloat()),
-                                strokeWidth = 2.dp.toPx(),
+                                strokeWidth = 1f,
                             )
                         }
                     }
