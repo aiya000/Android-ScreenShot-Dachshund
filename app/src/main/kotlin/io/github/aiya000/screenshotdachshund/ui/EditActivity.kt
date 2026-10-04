@@ -183,12 +183,24 @@ class EditActivity : ComponentActivity() {
         onDeleteCancelled: () -> Unit,
         onDeleteConfirmed: () -> Unit,
     ) {
+        if (state is State.Ready && state.adjusting != null) {
+            val seam = state.adjusting
+            AdjustSeamScreen(
+                capture = state.capture,
+                model = state.model,
+                seam = seam,
+                onMoveUpperEdge = { rows -> onMoveUpperEdge(seam, rows) },
+                onMoveLowerEdge = { rows -> onMoveLowerEdge(seam, rows) },
+                onDone = onAdjustDone,
+            )
+            return
+        }
         Scaffold(
             // testTagsAsResourceId: the device tests reach the buttons by these tags
             modifier = Modifier.semantics { testTagsAsResourceId = true },
             topBar = { TopAppBar(title = { Text(stringResource(R.string.edit_title)) }) },
             bottomBar = {
-                if (state is State.Ready && state.adjusting == null) {
+                if (state is State.Ready) {
                     Button(
                         onClick = onSave,
                         enabled = !state.saving,
@@ -239,17 +251,6 @@ class EditActivity : ComponentActivity() {
                                 pageNumber = deleting + 1,
                                 onCancel = onDeleteCancelled,
                                 onConfirm = onDeleteConfirmed,
-                            )
-                        }
-                        val seam = state.adjusting
-                        if (seam != null) {
-                            AdjustSeamDialog(
-                                capture = state.capture,
-                                model = state.model,
-                                seam = seam,
-                                onMoveUpperEdge = { rows -> onMoveUpperEdge(seam, rows) },
-                                onMoveLowerEdge = { rows -> onMoveLowerEdge(seam, rows) },
-                                onDone = onAdjustDone,
                             )
                         }
                     }
