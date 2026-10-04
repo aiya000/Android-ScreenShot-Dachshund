@@ -29,6 +29,7 @@ ANDROID_SERIAL=emulator-5554 test-device/drive/40-prompt-when-the-service-is-off
 ANDROID_SERIAL=emulator-5554 test-device/drive/50-trim-the-start-and-the-end.sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/60-a-second-capture-replaces-the-first.sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/70-ask-before-leaving.sh
+ANDROID_SERIAL=emulator-5554 test-device/drive/80-old-captures-are-swept.sh
 ```
 
 - `10`: a whole capture of the system settings, from the app's start button to a saved PNG that
@@ -46,6 +47,9 @@ ANDROID_SERIAL=emulator-5554 test-device/drive/70-ask-before-leaving.sh
   has to switch to the second capture (read from its `editing <folder>` log line)
 - `70`: back on an unsaved capture asks first (Cancel keeps the screen, Leave closes it), back on
   the adjust screen only closes the adjust screen, and a saved capture closes at once
+- `80`: a capture leaves exactly one folder in the cache (older ones are swept when it starts), a
+  capture started over an open edit screen leaves two, and after both edit screens are left the
+  next capture leaves one again
 
 Each run keeps its screenshots, view-tree dumps and logs under `test-device/runs/<timestamp>/`,
 so a failure can be looked at afterwards. The `runs/` folder is not committed.
