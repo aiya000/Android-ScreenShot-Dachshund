@@ -12,6 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -51,8 +52,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.aiya000.screenshotdachshund.R
+import io.github.aiya000.screenshotdachshund.join.Adjusting
 import io.github.aiya000.screenshotdachshund.join.CutModel
 import io.github.aiya000.screenshotdachshund.join.PreviewLayout
+import io.github.aiya000.screenshotdachshund.join.moveLowerEdge
+import io.github.aiya000.screenshotdachshund.join.moveUpperEdge
 import io.github.aiya000.screenshotdachshund.join.rejoinSeam
 import io.github.aiya000.screenshotdachshund.join.removeCut
 import io.github.aiya000.screenshotdachshund.storage.CaptureFiles
@@ -74,8 +78,8 @@ class EditActivity : ComponentActivity() {
         data class Ready(
             val capture: LoadedCapture,
             val model: CutModel,
-            /** The seam being adjusted, or null. */
-            val adjusting: Int?,
+            /** The seam, or end of the image, being adjusted, or null. */
+            val adjusting: Adjusting?,
             /** The cut whose page the user is being asked whether to delete, or null. */
             val deleting: Int?,
             val savedAs: String?,
@@ -102,10 +106,10 @@ class EditActivity : ComponentActivity() {
                 EditScreen(
                     state = state,
                     onSave = ::save,
-                    onAdjust = { seam -> update { it.copy(adjusting = seam) } },
+                    onAdjust = { target -> update { it.copy(adjusting = target) } },
                     onAdjustDone = { update { it.copy(adjusting = null) } },
-                    onMoveUpperEdge = { seam, rows -> update { it.copy(model = it.model.moveUpperEdge(seam, rows)) } },
-                    onMoveLowerEdge = { seam, rows -> update { it.copy(model = it.model.moveLowerEdge(seam, rows)) } },
+                    onMoveUpperEdge = { target, rows -> update { it.copy(model = it.model.moveUpperEdge(target, rows)) } },
+                    onMoveLowerEdge = { target, rows -> update { it.copy(model = it.model.moveLowerEdge(target, rows)) } },
                     onDelete = { cut -> update { it.copy(deleting = cut) } },
                     onDeleteCancelled = { update { it.copy(deleting = null) } },
                     onDeleteConfirmed = ::deleteConfirmed,
@@ -175,22 +179,22 @@ class EditActivity : ComponentActivity() {
     private fun EditScreen(
         state: State,
         onSave: () -> Unit,
-        onAdjust: (Int) -> Unit,
+        onAdjust: (Adjusting) -> Unit,
         onAdjustDone: () -> Unit,
-        onMoveUpperEdge: (Int, Int) -> Unit,
-        onMoveLowerEdge: (Int, Int) -> Unit,
+        onMoveUpperEdge: (Adjusting, Int) -> Unit,
+        onMoveLowerEdge: (Adjusting, Int) -> Unit,
         onDelete: (Int) -> Unit,
         onDeleteCancelled: () -> Unit,
         onDeleteConfirmed: () -> Unit,
     ) {
         if (state is State.Ready && state.adjusting != null) {
-            val seam = state.adjusting
+            val target = state.adjusting
             AdjustSeamScreen(
                 capture = state.capture,
                 model = state.model,
-                seam = seam,
-                onMoveUpperEdge = { rows -> onMoveUpperEdge(seam, rows) },
-                onMoveLowerEdge = { rows -> onMoveLowerEdge(seam, rows) },
+                adjusting = target,
+                onMoveUpperEdge = { rows -> onMoveUpperEdge(target, rows) },
+                onMoveLowerEdge = { rows -> onMoveLowerEdge(target, rows) },
                 onDone = onAdjustDone,
             )
             return
@@ -261,14 +265,15 @@ class EditActivity : ComponentActivity() {
 
     /**
      * The joined image exactly as it will be saved -- the cuts stacked with nothing between
-     * them -- and, beside it, an Adjust button level with each seam and a Delete button level
-     * with each page. A thin line across the image marks each seam.
+     * them -- and, beside it, an Adjust button level with each seam, a Delete button level
+     * with each page, and at the very top and the very bottom a button to trim where the
+     * image starts and where it ends. A thin line across the image marks each seam.
      */
     @Composable
     private fun JoinedPreview(
         capture: LoadedCapture,
         model: CutModel,
-        onAdjust: (Int) -> Unit,
+        onAdjust: (Adjusting) -> Unit,
         onDelete: (Int) -> Unit,
         canDelete: Boolean,
     ) {
@@ -347,7 +352,7 @@ class EditActivity : ComponentActivity() {
                     layout.seamTops.forEachIndexed { seam, seamTop ->
                         val y = (seamTop - buttonHeightPx / 2).coerceIn(0, maxOf(0, layout.totalHeight - buttonHeightPx))
                         OutlinedButton(
-                            onClick = { onAdjust(seam) },
+                            onClick = { onAdjust(Adjusting.Seam(seam)) },
                             modifier = Modifier
                                 .offset { IntOffset(0, y) }
                                 .width(controlsWidth)
@@ -356,6 +361,30 @@ class EditActivity : ComponentActivity() {
                         ) {
                             Text(stringResource(R.string.adjust_seam))
                         }
+                    }
+                    // The ends of the image: level with its top and with its bottom. Their
+                    // labels are two words, so the button's own padding is tightened to fit them
+                    val trimPadding = PaddingValues(horizontal = 8.dp)
+                    OutlinedButton(
+                        onClick = { onAdjust(Adjusting.Start) },
+                        contentPadding = trimPadding,
+                        modifier = Modifier
+                            .width(controlsWidth)
+                            .height(buttonHeight)
+                            .testTag("trim-start"),
+                    ) {
+                        Text(stringResource(R.string.trim_start), maxLines = 1)
+                    }
+                    OutlinedButton(
+                        onClick = { onAdjust(Adjusting.End) },
+                        contentPadding = trimPadding,
+                        modifier = Modifier
+                            .offset { IntOffset(0, maxOf(0, layout.totalHeight - buttonHeightPx)) }
+                            .width(controlsWidth)
+                            .height(buttonHeight)
+                            .testTag("trim-end"),
+                    ) {
+                        Text(stringResource(R.string.trim_end), maxLines = 1)
                     }
                 }
             }

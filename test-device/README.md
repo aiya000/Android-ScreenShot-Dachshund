@@ -26,6 +26,7 @@ ANDROID_SERIAL=emulator-5554 test-device/drive/10-capture-the-settings-and-save.
 ANDROID_SERIAL=emulator-5554 test-device/drive/20-adjust-a-seam.sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/30-delete-a-page.sh
 ANDROID_SERIAL=emulator-5554 test-device/drive/40-prompt-when-the-service-is-off.sh
+ANDROID_SERIAL=emulator-5554 test-device/drive/50-trim-the-start-and-the-end.sh
 ```
 
 - `10`: a whole capture of the system settings, from the app's start button to a saved PNG that
@@ -36,6 +37,9 @@ ANDROID_SERIAL=emulator-5554 test-device/drive/40-prompt-when-the-service-is-off
   Delete makes the next save shorter
 - `40`: with the service off, the app asks to switch it on; Later puts it aside, a fresh start asks
   again, and the button lands in the accessibility list on the service's row
+- `50`: the same capture, then "Start here" moves where the image starts fifty rows down the first
+  page and "End here" moves where it ends fifty rows up the last page; each save afterwards is
+  exactly fifty rows shorter, and each trim screen shows the buttons of one edge only
 
 Each run keeps its screenshots, view-tree dumps and logs under `test-device/runs/<timestamp>/`,
 so a failure can be looked at afterwards. The `runs/` folder is not committed.

@@ -210,3 +210,93 @@ class RejoinSeamTrailingBarTest {
         assertEquals(Cut(0, 0, 1), model.withUpperEdge(0, -5).cuts[0])
     }
 }
+
+/**
+ * The very top of the first page and the very bottom of the last page can be trimmed: the
+ * image starts and ends where the user says, the way a seam's edges do, one side each.
+ */
+class CutModelTrimTest {
+
+    private val model = CutModel(
+        cuts = listOf(Cut(0, 0, 90), Cut(1, 30, 90), Cut(2, 30, 100)),
+        pageHeights = listOf(100, 100, 100),
+    )
+
+    @Test
+    fun `the image starts where the first cut starts and ends where the last cut ends`() {
+        assertEquals(0, model.start)
+        assertEquals(100, model.end)
+    }
+
+    @Test
+    fun `moving the start down trims the top of the image`() {
+        val moved = model.moveStart(rows = 50)
+
+        assertEquals(Cut(0, 50, 90), moved.cuts[0])
+        assertEquals(model.cuts.drop(1), moved.cuts.drop(1))
+        assertEquals(model.joinedHeight - 50, moved.joinedHeight)
+    }
+
+    @Test
+    fun `the start stops at the top of its page and one row over the first cut's end`() {
+        assertEquals(Cut(0, 0, 90), model.moveStart(-500).cuts[0])
+        assertEquals(Cut(0, 89, 90), model.moveStart(500).cuts[0])
+    }
+
+    @Test
+    fun `moving the end up trims the bottom of the image`() {
+        val moved = model.moveEnd(rows = -50)
+
+        assertEquals(Cut(2, 30, 50), moved.cuts[2])
+        assertEquals(model.cuts.dropLast(1), moved.cuts.dropLast(1))
+        assertEquals(model.joinedHeight - 50, moved.joinedHeight)
+    }
+
+    @Test
+    fun `the end stops at the bottom of its page and one row under the last cut's start`() {
+        assertEquals(Cut(2, 30, 100), model.moveEnd(500).cuts[2])
+        assertEquals(Cut(2, 30, 31), model.moveEnd(-500).cuts[2])
+    }
+
+    @Test
+    fun `a single cut can be trimmed at both ends`() {
+        val single = CutModel(listOf(Cut(0, 0, 100)), listOf(100))
+
+        assertEquals(Cut(0, 10, 80), single.moveStart(10).moveEnd(-20).cuts[0])
+    }
+
+    @Test
+    fun `a trim leaves the original alone`() {
+        model.moveStart(10)
+        model.moveEnd(-10)
+
+        assertEquals(Cut(0, 0, 90), model.cuts[0])
+        assertEquals(Cut(2, 30, 100), model.cuts[2])
+    }
+}
+
+class AdjustingTest {
+
+    private val model = CutModel(
+        cuts = listOf(Cut(0, 0, 90), Cut(1, 30, 90), Cut(2, 30, 100)),
+        pageHeights = listOf(100, 100, 100),
+    )
+
+    @Test
+    fun `a seam's edges move the cuts around it`() {
+        assertEquals(Cut(0, 0, 95), model.moveUpperEdge(Adjusting.Seam(0), 5).cuts[0])
+        assertEquals(Cut(1, 35, 90), model.moveLowerEdge(Adjusting.Seam(0), 5).cuts[1])
+    }
+
+    @Test
+    fun `the start of the image is a lower edge, and has no upper edge`() {
+        assertEquals(Cut(0, 20, 90), model.moveLowerEdge(Adjusting.Start, 20).cuts[0])
+        assertEquals(model, model.moveUpperEdge(Adjusting.Start, 20))
+    }
+
+    @Test
+    fun `the end of the image is an upper edge, and has no lower edge`() {
+        assertEquals(Cut(2, 30, 80), model.moveUpperEdge(Adjusting.End, -20).cuts[2])
+        assertEquals(model, model.moveLowerEdge(Adjusting.End, -20))
+    }
+}

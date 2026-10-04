@@ -42,6 +42,13 @@
     <string name="adjust_lower_edge">下のページの始まり</string>
     <string name="adjust_done">完了</string>
 
+    <string name="trim_start">ここから</string>
+    <string name="trim_end">ここまで</string>
+    <string name="trim_start_title">始まりの位置</string>
+    <string name="trim_end_title">終わりの位置</string>
+    <string name="trim_start_edge">画像の始まり</string>
+    <string name="trim_end_edge">画像の終わり</string>
+
     <string name="delete_page">削除</string>
     <string name="delete_title">ページ %1$d を削除しますか？</string>
     <string name="delete_message">このページを画像から取り除きます。前後のページは互いにつながれます。</string>
