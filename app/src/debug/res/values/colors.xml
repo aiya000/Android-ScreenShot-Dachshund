@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Orange launcher icon, to tell the debug build apart from the release build. -->
-    <color name="ic_launcher_background">#F08A2A</color>
+    <!--
+        Orange launcher icon, to tell the debug build apart from the release build. The same
+        orange as Fossify-Gallery's debug build (md_orange_700).
+    -->
+    <color name="ic_launcher_background">#F57C00</color>
 </resources>

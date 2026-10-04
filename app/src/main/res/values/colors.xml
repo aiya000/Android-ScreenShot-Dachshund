@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#C98A4B</color>
+    <!-- A deep brown behind the cream dog. The debug build swaps this for orange (src/debug). -->
+    <color name="ic_launcher_background">#5D4037</color>
 </resources>
