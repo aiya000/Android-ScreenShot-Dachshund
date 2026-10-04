@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    A miniature dachshund in profile: the long low body, the short legs, the long head, the
-    drooping ear and the tail up. Kept inside the 66dp safe circle of an adaptive icon
-    (21..87 on this canvas), so no launcher mask cuts the dog.
+    A miniature dachshund in profile, in the red coat of the maintainer's own dog: the long
+    low body, the short legs, the long head, the darker drooping ear and the tail up. A thin
+    cream outline sits under the dog so that it reads on any background, the debug build's
+    orange included. Kept inside the 66dp safe circle of an adaptive icon (21..87 on this
+    canvas), so no launcher mask cuts the dog.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -18,36 +20,63 @@
         android:scaleX="0.86"
         android:scaleY="0.86">
 
-    <!-- the tail, up and curling -->
+    <!-- the outline: the same shapes, stroked in cream, under everything -->
     <path
         android:pathData="M25,55 Q17,51 19,41"
         android:strokeColor="#FFF4E0"
-        android:strokeWidth="4.5"
+        android:strokeWidth="9"
         android:strokeLineCap="round" />
+    <path
+        android:strokeColor="#FFF4E0"
+        android:strokeWidth="4.5"
+        android:strokeLineJoin="round"
+        android:pathData="M30,50h42a8,8 0,0 1,8 8v0a8,8 0,0 1,-8 8h-42a8,8 0,0 1,-8 -8v-2a8,8 0,0 1,8 -8z" />
+    <path
+        android:strokeColor="#FFF4E0"
+        android:strokeWidth="4.5"
+        android:strokeLineJoin="round"
+        android:pathData="M26,64h7v10a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2zM35,64h7v10a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2zM60,64h7v10a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2zM69,64h7v10a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2z" />
+    <path
+        android:strokeColor="#FFF4E0"
+        android:strokeWidth="4.5"
+        android:strokeLineJoin="round"
+        android:pathData="M66,54 L70,41 Q72,34 80,34 L83,34 Q89,35 90,41 L90,44 Q90,48 86,48 L82,48 Q78,49 76,52 L70,54z" />
+    <path
+        android:strokeColor="#FFF4E0"
+        android:strokeWidth="4.5"
+        android:strokeLineJoin="round"
+        android:pathData="M75,36 Q67,38 67,49 Q67,56 71,56 Q75,55 76,46 Q77,40 75,36z" />
 
     <!-- the body -->
     <path
-        android:fillColor="#FFF4E0"
-        android:pathData="M30,50h42a8,8 0,0 1,8 8v0a8,8 0,0 1,-8 8h-42a8,8 0,0 1,-8 -8v0a8,8 0,0 1,8 -8z" />
+        android:fillColor="#B5602C"
+        android:pathData="M30,50h42a8,8 0,0 1,8 8v0a8,8 0,0 1,-8 8h-42a8,8 0,0 1,-8 -8v-2a8,8 0,0 1,8 -8z" />
+
+    <!-- the tail, up and curling, drawn over the body so the join is seamless -->
+    <path
+        android:pathData="M25,55 Q17,51 19,41"
+        android:strokeColor="#B5602C"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round" />
 
     <!-- the legs -->
     <path
-        android:fillColor="#FFF4E0"
+        android:fillColor="#B5602C"
         android:pathData="M26,64h7v10a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2zM35,64h7v10a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2zM60,64h7v10a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2zM69,64h7v10a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2z" />
 
     <!-- the neck and the long head, nose to the right -->
     <path
-        android:fillColor="#FFF4E0"
+        android:fillColor="#B5602C"
         android:pathData="M66,54 L70,41 Q72,34 80,34 L83,34 Q89,35 90,41 L90,44 Q90,48 86,48 L82,48 Q78,49 76,52 L70,54z" />
 
-    <!-- the ear, a long drop over the neck -->
+    <!-- the ear, a long drop over the neck, the darker fur of a red dachshund -->
     <path
-        android:fillColor="#E3BE8F"
+        android:fillColor="#7A3E1E"
         android:pathData="M75,36 Q67,38 67,49 Q67,56 71,56 Q75,55 76,46 Q77,40 75,36z" />
 
     <!-- the eye and the nose -->
     <path
-        android:fillColor="#3B2A1E"
+        android:fillColor="#2B1A10"
         android:pathData="M80.5,39.5a1.6,1.6 0,1 0,3.2 0a1.6,1.6 0,1 0,-3.2 0zM88.5,38.6a1.6,1.6 0,1 0,3.2 0a1.6,1.6 0,1 0,-3.2 0z" />
     </group>
 </vector>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- A deep brown behind the cream dog. The debug build swaps this for orange (src/debug). -->
-    <color name="ic_launcher_background">#5D4037</color>
+    <!-- A warm cream behind the red dog, like the blanket it naps on. The debug build swaps this for orange (src/debug). -->
+    <color name="ic_launcher_background">#F5E6D3</color>
 </resources>
