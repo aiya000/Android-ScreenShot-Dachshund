@@ -22,7 +22,7 @@
 
     <!-- the outline: the same shapes, stroked in cream, under everything -->
     <path
-        android:pathData="M25,55 Q17,51 19,41"
+        android:pathData="M31,57 Q17,53 19,41"
         android:strokeColor="#FFF4E0"
         android:strokeWidth="9"
         android:strokeLineCap="round" />
@@ -30,7 +30,7 @@
         android:strokeColor="#FFF4E0"
         android:strokeWidth="4.5"
         android:strokeLineJoin="round"
-        android:pathData="M30,50h42a8,8 0,0 1,8 8v0a8,8 0,0 1,-8 8h-42a8,8 0,0 1,-8 -8v-2a8,8 0,0 1,8 -8z" />
+        android:pathData="M30,50h42a8,8 0,0 1,8 8v2a8,8 0,0 1,-8 8h-42a8,8 0,0 1,-8 -8v-2a8,8 0,0 1,8 -8z" />
     <path
         android:strokeColor="#FFF4E0"
         android:strokeWidth="4.5"
@@ -50,11 +50,12 @@
     <!-- the body -->
     <path
         android:fillColor="#B5602C"
-        android:pathData="M30,50h42a8,8 0,0 1,8 8v0a8,8 0,0 1,-8 8h-42a8,8 0,0 1,-8 -8v-2a8,8 0,0 1,8 -8z" />
+        android:pathData="M30,50h42a8,8 0,0 1,8 8v2a8,8 0,0 1,-8 8h-42a8,8 0,0 1,-8 -8v-2a8,8 0,0 1,8 -8z" />
 
-    <!-- the tail, up and curling, drawn over the body so the join is seamless -->
+    <!-- the tail, up and curling. It grows from inside the body and is drawn over it,
+         so the join is one smooth shape with no bump where the outlines meet -->
     <path
-        android:pathData="M25,55 Q17,51 19,41"
+        android:pathData="M31,57 Q17,53 19,41"
         android:strokeColor="#B5602C"
         android:strokeWidth="4.5"
         android:strokeLineCap="round" />
